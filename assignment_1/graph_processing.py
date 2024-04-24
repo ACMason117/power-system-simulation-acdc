@@ -4,8 +4,8 @@ This is a skeleton for the graph processing assignment.
 We define a graph processor class with some function skeletons. Test
 """
 
-from typing import List, Tuple
 
+from typing import List, Tuple
 
 class IDNotFoundError(Exception):
     pass
