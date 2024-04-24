@@ -93,7 +93,7 @@ class GraphProcessor:
         
         # 4. edge_enabled should have the same length as edge_ids
         if len(edge_enabled) != len(edge_ids):
-            raise InputLengthDoesNotMatchError("Length of enabled edges list does not match edge ID list")
+            raise InputLengthDoesNotMatchError("Length of enabled edge list does not match edge ID list")
         
         # 5. source_vertex_id should be a valid vertex id
         if source_vertex_id not in vertex_ids:
