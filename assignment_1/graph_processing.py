@@ -5,6 +5,8 @@ We define a graph processor class with some function skeletons. Test
 """
 
 from typing import List, Tuple
+import numpy as np
+import scipy as sp
 
 
 class IDNotFoundError(Exception):
