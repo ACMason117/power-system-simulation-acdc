@@ -33,6 +33,13 @@ class EdgeAlreadyDisabledError(Exception):
     pass
 
 
+vertex_ids = [0, 1, 2, 3, 4, 5]
+edge_ids = [1, 2, 3, 4, 5]
+edge_vertex_id_pairs = [(0, 1), (1, 2), (1, 3), (3, 4), (3, 5)]
+edge_enabled = [True, True, True, True, True]
+source_vertex_id = 0
+
+
 class GraphProcessor:
     """
     General documentation of this class.
@@ -64,14 +71,41 @@ class GraphProcessor:
 
         Args:
             vertex_ids: list of vertex ids
-            edge_ids: liest of edge ids
+            edge_ids: list of edge ids
             edge_vertex_id_pairs: list of tuples of two integer
                 Each tuple is a vertex id pair of the edge.
             edge_enabled: list of bools indicating of an edge is enabled or not
             source_vertex_id: vertex id of the source in the graph
         """
-        # put your implementation here
+        # 1. vertex_ids and edge_ids should be unique
+        if len(set(vertex_ids)) != len(vertex_ids):
+            raise IDNotUniqueError("Vertex IDs are not unique")
+        if len(set(edge_ids)) != len(edge_ids):
+            raise IDNotUniqueError("Edge IDs are not unique")
         pass
+
+        # 2. edge_vertex_id_pairs should have the same length as edge_ids
+        if len(edge_vertex_id_pairs) != len(edge_ids):
+            raise InputLengthDoesNotMatchError("Length of vertex-edge pairs list does not match edge ID list")
+
+        # 3. edge_vertex_id_pairs should contain valid vertex ids
+        for i in range(len(edge_ids)):
+            vertex1, vertex2 = edge_vertex_id_pairs[i]
+
+            if vertex1 not in vertex_ids or vertex2 not in vertex_ids:
+                raise IDNotFoundError("Edge-vertex ID pair contains non-valid vertex ID")
+
+        # 4. edge_enabled should have the same length as edge_ids
+        if len(edge_enabled) != len(edge_ids):
+            raise InputLengthDoesNotMatchError("Length of enabled edge list does not match edge ID list")
+
+        # 5. source_vertex_id should be a valid vertex id
+        if source_vertex_id not in vertex_ids:
+            raise IDNotFoundError("Source vertex ID is not a valid vertex ID")
+
+        # 6.  The graph should be fully connected
+
+        # 7. The graph should not contain cycles
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
@@ -137,3 +171,12 @@ class GraphProcessor:
         """
         # put your implementation here
         pass
+
+
+graph_processor = GraphProcessor(
+    vertex_ids=vertex_ids,
+    edge_ids=edge_ids,
+    edge_vertex_id_pairs=edge_vertex_id_pairs,
+    edge_enabled=edge_enabled,
+    source_vertex_id=source_vertex_id,
+)
