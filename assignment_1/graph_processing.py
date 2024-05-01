@@ -37,16 +37,6 @@ class GraphCycleError(Exception):
 class EdgeAlreadyDisabledError(Exception):
     pass
 
-# vertex_ids = [0, 1, 2, 3, 4, 5]
-# edge_ids = [1, 2, 3, 4, 5]
-# edge_vertex_id_pairs = [(0, 1), (1, 2), (1, 3), (3, 4), (3, 5)]
-# edge_enabled = [True, True, True, True, True]
-# source_vertex_id = 0
-
-# class ParentError(Exception):
-#     # print('Attempt to ')
-#     pass
-
 
 class GraphProcessor:
     """
@@ -86,8 +76,12 @@ class GraphProcessor:
             edge_enabled: list of bools indicating of an edge is enabled or not
             source_vertex_id: vertex id of the source in the graph
         """
-        # put your implementation here
-    
+        self.vertex_ids = vertex_ids
+        self.edge_ids = edge_ids
+        self.edge_vertex_id_pairs = edge_vertex_id_pairs
+        self.edge_enabled = edge_enabled
+        self.source_vertex_id = source_vertex_id
+
         # 1. vertex_ids and edge_ids should be unique
         if len(set(vertex_ids)) != len(vertex_ids):
             raise IDNotUniqueError("Vertex IDs are not unique")
@@ -113,8 +107,6 @@ class GraphProcessor:
         # 5. source_vertex_id should be a valid vertex id
         if source_vertex_id not in vertex_ids:
             raise IDNotFoundError("Source vertex ID is not a valid vertex ID")
-        
-        # 6.  The graph should be fully connected
 
         # custom Errors
         if len(edge_vertex_id_pairs) != len(set(sort_tuple_list(edge_vertex_id_pairs))):
@@ -127,51 +119,11 @@ class GraphProcessor:
         # receive adjacency list
         adjacency_list = self.build_adjacency_list(edge_vertex_id_pairs, edge_enabled)
         self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id)
-        
-        if len(vertex_visited) != len(vertex_ids):
-            raise GraphNotFullyConnectedError("Graph not fully connected")
-
-        # 7. The graph should not contain cycles
-        graph = {vertex: [] for vertex in vertex_ids}
-        for edge_id, (u, v) in zip(edge_ids, edge_vertex_id_pairs):
-            if edge_enabled[edge_id - 1]:
-                graph[u].append(v)
-
-        color = {}
-        parent = {}
-        for u in graph.keys():
-            color[u] = 'W'
-            parent[u] = None
-
-        def dfs(u, color, parent):
-            color[u] = 'G'
-            for v in graph[u]:
-                if color[v] == 'W':
-                    parent[v] = u
-                    cycle = dfs(v, color, parent)
-                    if cycle == True:
-                        return True
-                elif color[v] == "G" and parent[u]!=v:
-                    print ("Cycle found", u, v)
-                    return True
-            color[u] = "B"
-            return False
-        
-        is_cyclic = False
-        for u in graph.keys():
-            if color[u] == 'W':
-                is_cyclic = dfs(u, color, parent)
-                if is_cyclic == True:
-                    break
-        
-        if is_cyclic == True:
-            raise GraphCycleError("There is a cycle in the graph")
 
         if len(vertex_visited) != len(vertex_ids):
             raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
 
         return
-    
 
     def DFS(self, adjacency_list, visited, parent, parent_list, start_node) -> List[int]:
         """
@@ -274,19 +226,59 @@ class GraphProcessor:
         Returns:
             A list of alternative edge ids.
         """
-        # put your implementation here
+        if disabled_edge_id not in self.edge_ids:
+            raise IDNotFoundError("Disabled edge ID is not a valid edge ID")
 
-        
+        if not self.edge_enabled[self.edge_ids.index(disabled_edge_id)]:
+            raise EdgeAlreadyDisabledError("Disabled edge is already disabled")
 
-        pass
+        # create a copy of the current edge enabled list
+        edge_enabled_copy = self.edge_enabled.copy()
+        # mark the disabled edge as disabled
+        edge_enabled_copy[self.edge_ids.index(disabled_edge_id)] = False
 
-graph_processor = GraphProcessor(
-    vertex_ids=vertex_ids,
-    edge_ids=edge_ids,
-    edge_vertex_id_pairs=edge_vertex_id_pairs,
-    edge_enabled=edge_enabled,
-    source_vertex_id=source_vertex_id
-)
+        # create a copy of the graph processor with the new edge enabled list
+        temp_graph = GraphProcessor(
+            self.vertex_ids.copy(),
+            self.edge_ids.copy(),
+            self.edge_vertex_id_pairs.copy(),
+            edge_enabled_copy,
+            self.source_vertex_id
+        )
+
+        # run DFS to check if the graph is fully connected
+        vertex_visited = []
+        vertex_parents = {}
+        try:
+            temp_graph.DFS(temp_graph.build_adjacency_list(temp_graph.edge_vertex_id_pairs, edge_enabled_copy),
+                           vertex_visited, float("Nan"), vertex_parents, temp_graph.source_vertex_id)
+        except GraphCycleError:
+            # if the graph contains a cycle, we need to find an alternative edge
+            for edge_id, is_enabled in enumerate(edge_enabled_copy):
+                if not is_enabled:
+                    # if the edge is already disabled, we can try enabling it
+                    edge_enabled_copy[edge_id] = True
+                    temp_graph = GraphProcessor(
+                        self.vertex_ids.copy(),
+                        self.edge_ids.copy(),
+                        self.edge_vertex_id_pairs.copy(),
+                        edge_enabled_copy,
+                        self.source_vertex_id
+                    )
+                    try:
+                        # run DFS again to check if the graph is fully connected
+                        temp_graph.DFS(temp_graph.build_adjacency_list(temp_graph.edge_vertex_id_pairs, edge_enabled_copy),
+                                       vertex_visited, float("Nan"), vertex_parents, temp_graph.source_vertex_id)
+                        # if the graph is fully connected, we have found an alternative edge
+                        return [self.edge_ids[edge_id]]
+                    except GraphCycleError:
+                        # if the graph still contains a cycle, we need to keep searching
+                        edge_enabled_copy[edge_id] = False
+                    # if we have searched all disabled edges and haven't found an alternative,
+                    # the function will return an empty list
+
+        return []
+
 
 # other functions not dependent on specific class
 
