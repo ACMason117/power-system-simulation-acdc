@@ -22,21 +22,19 @@ class IDNotUniqueError(Exception):
     pass
 
 
+class EdgePairNotUniqueError(Exception):
+    pass
+
+
 class GraphNotFullyConnectedError(Exception):
     pass
 
 
 class GraphCycleError(Exception):
-    # print('Cycle detected in graph!')
     pass
 
 
 class EdgeAlreadyDisabledError(Exception):
-    pass
-
-
-class ParentError(Exception):
-    # print('Attempt to ')
     pass
 
 
@@ -104,15 +102,20 @@ class GraphProcessor:
         if source_vertex_id not in vertex_ids:
             raise IDNotFoundError("Source vertex ID is not a valid vertex ID")
 
-        # perform depth first search to check:
-        # 6. The graph should be fully connected
-        # 7. The graph should not contain cycles
+        # custom Errors
+        if len(edge_vertex_id_pairs) != len(set(sort_tuple_list(edge_vertex_id_pairs))):
+            raise EdgePairNotUniqueError("Multiple edges connecting same 2 vertices found")
 
+        # 6. The graph should be fully connected
+        # 7. The graph should not contain cycles (checked inside DFS)
         vertex_visited = []
         vertex_parents = {}
         # receive adjacency list
         adjacency_list = self.build_adjacency_list(edge_vertex_id_pairs, edge_enabled)
         self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id)
+
+        if len(vertex_visited) != len(vertex_ids):
+            raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
 
         return
 
@@ -128,6 +131,8 @@ class GraphProcessor:
             parent_list[start_node] = parent  # assign parent of node
 
             for adjacent_vertex in adjacency_list[start_node]:
+                if (adjacent_vertex in visited) & (adjacent_vertex != parent):
+                    raise GraphCycleError("Cycle detected")
                 self.DFS(adjacency_list, visited, start_node, parent_list, adjacent_vertex)
 
         return
@@ -152,13 +157,6 @@ class GraphProcessor:
             adjacency_list[v].append(u)
 
         return adjacency_list
-
-    # def sort_tuple_list(unsorted_tuple_list) -> List[Tuple[int, int]]:
-    #     # sort each tuple in ascending order
-    #     sorted_tuple_list = [ tuple(sorted(t)) for t in unsorted_tuple_list ]
-    #     sorted_tuple_list = sorted(sorted_tuple_list, key=lambda x: x[0])
-
-    #     return sorted_tuple_list
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
@@ -224,3 +222,17 @@ class GraphProcessor:
         """
         # put your implementation here
         pass
+
+
+# other functions not dependent on specific class
+
+
+def sort_tuple_list(edge_vertex_id_pairs) -> List[Tuple[int, int]]:
+
+    # sort each tuple in ascending order
+    sorted_tuple_list = [tuple(sorted(t)) for t in edge_vertex_id_pairs]
+
+    # sort each tuple based on initial value
+    sorted_tuple_list = sorted(sorted_tuple_list, key=lambda x: x[0])
+
+    return sorted_tuple_list
