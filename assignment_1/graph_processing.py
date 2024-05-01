@@ -121,7 +121,7 @@ class GraphProcessor:
                 if is_cyclic == True:
                     break
         
-        if is_cyclic == False:
+        if is_cyclic == True:
             raise GraphCycleError("There is a cycle in the graph")
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
