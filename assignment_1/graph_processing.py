@@ -5,6 +5,7 @@ We define a graph processor class with some function skeletons. Test
 """
 
 from typing import List, Tuple
+
 import numpy as np
 import scipy as sp
 
@@ -33,10 +34,10 @@ class GraphCycleError(Exception):
 class EdgeAlreadyDisabledError(Exception):
     pass
 
+
 class ParentError(Exception):
     # print('Attempt to ')
     pass
-
 
 
 class GraphProcessor:
@@ -45,8 +46,9 @@ class GraphProcessor:
     You need to describe the purpose of this class and the functions in it.
     We are using an undirected graph in the processor.
     """
+
     # add parent list, adjacency list and potentially more
-    def __init__( 
+    def __init__(
         self,
         vertex_ids: List[int],
         edge_ids: List[int],
@@ -78,7 +80,7 @@ class GraphProcessor:
         """
         # 1. vertex_ids and edge_ids should be unique
         if len(set(vertex_ids)) != len(vertex_ids):
-            raise IDNotUniqueError("Vertex IDs are not unique") 
+            raise IDNotUniqueError("Vertex IDs are not unique")
         if len(set(edge_ids)) != len(edge_ids):
             raise IDNotUniqueError("Edge IDs are not unique")
         pass
@@ -103,7 +105,7 @@ class GraphProcessor:
             raise IDNotFoundError("Source vertex ID is not a valid vertex ID")
 
         # perform depth first search to check:
-        # 6. The graph should be fully connected 
+        # 6. The graph should be fully connected
         # 7. The graph should not contain cycles
 
         vertex_visited = []
@@ -111,62 +113,52 @@ class GraphProcessor:
         # receive adjacency list
         adjacency_list = self.build_adjacency_list(edge_vertex_id_pairs, edge_enabled)
         self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id)
-        
-
-        
 
         return
 
     def DFS(self, adjacency_list, visited, parent, parent_list, start_node) -> List[int]:
         """
-        Given an GraphProcessor, return Depth First Search visited nodes list and parent list. 
+        Given an GraphProcessor, return Depth First Search visited nodes list and parent list.
         """
 
         # start DFS from start_node
-        if start_node not in visited: # check if node has been visited
+        if start_node not in visited:  # check if node has been visited
 
             visited.append(start_node)
-            parent_list[start_node] = parent # assign parent of node
-           
+            parent_list[start_node] = parent  # assign parent of node
 
             for adjacent_vertex in adjacency_list[start_node]:
                 self.DFS(adjacency_list, visited, start_node, parent_list, adjacent_vertex)
 
-
         return
-    
 
     def build_adjacency_list(self, edge_vertex_id_pairs, edge_enabled):
         """
-        Given an GraphProcessor, return an undirected adjacency list (only enabled edges used). 
+        Given an GraphProcessor, return an undirected adjacency list (only enabled edges used).
         """
 
         adjacency_list = {}
         enabled_edges = [num for num, m in zip(edge_vertex_id_pairs, edge_enabled) if m]
 
-        for edge in enabled_edges: # cycle through edge IDs
-            u, v = edge # tuple unpacking
+        for edge in enabled_edges:  # cycle through edge IDs
+            u, v = edge  # tuple unpacking
 
-            if u not in adjacency_list: # check if list for vertex u exists
+            if u not in adjacency_list:  # check if list for vertex u exists
                 adjacency_list[u] = []
-            if v not in adjacency_list: # check if list for vertex u exists
+            if v not in adjacency_list:  # check if list for vertex u exists
                 adjacency_list[v] = []
 
             adjacency_list[u].append(v)
             adjacency_list[v].append(u)
 
         return adjacency_list
-    
-
 
     # def sort_tuple_list(unsorted_tuple_list) -> List[Tuple[int, int]]:
     #     # sort each tuple in ascending order
     #     sorted_tuple_list = [ tuple(sorted(t)) for t in unsorted_tuple_list ]
     #     sorted_tuple_list = sorted(sorted_tuple_list, key=lambda x: x[0])
-        
+
     #     return sorted_tuple_list
-
-
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
