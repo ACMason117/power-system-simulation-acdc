@@ -156,11 +156,9 @@ class GraphProcessor:
         
         if is_cyclic == True:
             raise GraphCycleError("There is a cycle in the graph")
-        
-
-        
 
         return
+    
 
     def DFS(self, adjacency_list, visited, parent, parent_list, start_node) -> List[int]:
         """
