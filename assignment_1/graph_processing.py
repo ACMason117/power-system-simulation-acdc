@@ -6,6 +6,9 @@ We define a graph processor class with some function skeletons. Test
 
 from typing import List, Tuple
 
+import numpy as np
+import scipy as sp
+
 
 class IDNotFoundError(Exception):
     pass
@@ -24,17 +27,23 @@ class GraphNotFullyConnectedError(Exception):
 
 
 class GraphCycleError(Exception):
+    # print('Cycle detected in graph!')
     pass
 
 
 class EdgeAlreadyDisabledError(Exception):
     pass
 
-vertex_ids = [0, 1, 2, 3, 4, 5]
-edge_ids = [1, 2, 3, 4, 5]
-edge_vertex_id_pairs = [(0, 1), (1, 2), (1, 3), (3, 4), (3, 5)]
-edge_enabled = [True, True, True, True, True]
-source_vertex_id = 0
+# vertex_ids = [0, 1, 2, 3, 4, 5]
+# edge_ids = [1, 2, 3, 4, 5]
+# edge_vertex_id_pairs = [(0, 1), (1, 2), (1, 3), (3, 4), (3, 5)]
+# edge_enabled = [True, True, True, True, True]
+# source_vertex_id = 0
+
+# class ParentError(Exception):
+#     # print('Attempt to ')
+#     pass
+
 
 class GraphProcessor:
     """
@@ -42,6 +51,8 @@ class GraphProcessor:
     You need to describe the purpose of this class and the functions in it.
     We are using an undirected graph in the processor.
     """
+
+    # add parent list, adjacency list and potentially more
     def __init__(
         self,
         vertex_ids: List[int],
@@ -66,7 +77,7 @@ class GraphProcessor:
 
         Args:
             vertex_ids: list of vertex ids
-            edge_ids: liest of edge ids
+            edge_ids: list of edge ids
             edge_vertex_id_pairs: list of tuples of two integer
                 Each tuple is a vertex id pair of the edge.
             edge_enabled: list of bools indicating of an edge is enabled or not
@@ -75,18 +86,40 @@ class GraphProcessor:
         # put your implementation here
     
         # 1. vertex_ids and edge_ids should be unique
+        if len(set(vertex_ids)) != len(vertex_ids):
+            raise IDNotUniqueError("Vertex IDs are not unique")
+        if len(set(edge_ids)) != len(edge_ids):
+            raise IDNotUniqueError("Edge IDs are not unique")
+        pass
 
         # 2. edge_vertex_id_pairs should have the same length as edge_ids
-
+        if len(edge_vertex_id_pairs) != len(edge_ids):
+            raise InputLengthDoesNotMatchError("Length of vertex-edge pairs list does not match edge ID list")
 
         # 3. edge_vertex_id_pairs should contain valid vertex ids
-            
+        for i in range(len(edge_ids)):
+            vertex1, vertex2 = edge_vertex_id_pairs[i]
+
+            if vertex1 not in vertex_ids or vertex2 not in vertex_ids:
+                raise IDNotFoundError("Edge-vertex ID pair contains non-valid vertex ID")
+
         # 4. edge_enabled should have the same length as edge_ids
-        
+        if len(edge_enabled) != len(edge_ids):
+            raise InputLengthDoesNotMatchError("Length of enabled edge list does not match edge ID list")
+
         # 5. source_vertex_id should be a valid vertex id
+        if source_vertex_id not in vertex_ids:
+            raise IDNotFoundError("Source vertex ID is not a valid vertex ID")
         
         # 6.  The graph should be fully connected
-       
+        vertex_visited = []
+        vertex_parents = {}
+        # receive adjacency list
+        adjacency_list = self.build_adjacency_list(edge_vertex_id_pairs, edge_enabled)
+        self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id)
+        
+        if len(vertex_visited) != len(vertex_ids):
+            raise GraphNotFullyConnectedError("Graph not fully connected")
 
         # 7. The graph should not contain cycles
         graph = {vertex: [] for vertex in vertex_ids}
@@ -123,6 +156,55 @@ class GraphProcessor:
         
         if is_cyclic == True:
             raise GraphCycleError("There is a cycle in the graph")
+        
+
+        
+
+        return
+
+    def DFS(self, adjacency_list, visited, parent, parent_list, start_node) -> List[int]:
+        """
+        Given an GraphProcessor, return Depth First Search visited nodes list and parent list.
+        """
+
+        # start DFS from start_node
+        if start_node not in visited:  # check if node has been visited
+
+            visited.append(start_node)
+            parent_list[start_node] = parent  # assign parent of node
+
+            for adjacent_vertex in adjacency_list[start_node]:
+                self.DFS(adjacency_list, visited, start_node, parent_list, adjacent_vertex)
+
+        return
+
+    def build_adjacency_list(self, edge_vertex_id_pairs, edge_enabled):
+        """
+        Given an GraphProcessor, return an undirected adjacency list (only enabled edges used).
+        """
+
+        adjacency_list = {}
+        enabled_edges = [num for num, m in zip(edge_vertex_id_pairs, edge_enabled) if m]
+
+        for edge in enabled_edges:  # cycle through edge IDs
+            u, v = edge  # tuple unpacking
+
+            if u not in adjacency_list:  # check if list for vertex u exists
+                adjacency_list[u] = []
+            if v not in adjacency_list:  # check if list for vertex u exists
+                adjacency_list[v] = []
+
+            adjacency_list[u].append(v)
+            adjacency_list[v].append(u)
+
+        return adjacency_list
+
+    # def sort_tuple_list(unsorted_tuple_list) -> List[Tuple[int, int]]:
+    #     # sort each tuple in ascending order
+    #     sorted_tuple_list = [ tuple(sorted(t)) for t in unsorted_tuple_list ]
+    #     sorted_tuple_list = sorted(sorted_tuple_list, key=lambda x: x[0])
+
+    #     return sorted_tuple_list
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
