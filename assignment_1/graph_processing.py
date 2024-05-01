@@ -30,6 +30,11 @@ class GraphCycleError(Exception):
 class EdgeAlreadyDisabledError(Exception):
     pass
 
+vertex_ids = [0, 1, 2, 3, 4, 5]
+edge_ids = [1, 2, 3, 4, 5]
+edge_vertex_id_pairs = [(0, 1), (1, 2), (1, 3), (3, 4), (3, 5)]
+edge_enabled = [True, True, True, True, True]
+source_vertex_id = 0
 
 class GraphProcessor:
     """
@@ -37,7 +42,6 @@ class GraphProcessor:
     You need to describe the purpose of this class and the functions in it.
     We are using an undirected graph in the processor.
     """
-
     def __init__(
         self,
         vertex_ids: List[int],
@@ -69,7 +73,56 @@ class GraphProcessor:
             source_vertex_id: vertex id of the source in the graph
         """
         # put your implementation here
-        pass
+    
+        # 1. vertex_ids and edge_ids should be unique
+
+        # 2. edge_vertex_id_pairs should have the same length as edge_ids
+
+
+        # 3. edge_vertex_id_pairs should contain valid vertex ids
+            
+        # 4. edge_enabled should have the same length as edge_ids
+        
+        # 5. source_vertex_id should be a valid vertex id
+        
+        # 6.  The graph should be fully connected
+       
+
+        # 7. The graph should not contain cycles
+        graph = {vertex: [] for vertex in vertex_ids}
+        for edge_id, (u, v) in zip(edge_ids, edge_vertex_id_pairs):
+            if edge_enabled[edge_id - 1]:
+                graph[u].append(v)
+
+        color = {}
+        parent = {}
+        for u in graph.keys():
+            color[u] = 'W'
+            parent[u] = None
+
+        def dfs(u, color, parent):
+            color[u] = 'G'
+            for v in graph[u]:
+                if color[v] == 'W':
+                    parent[v] = u
+                    cycle = dfs(v, color, parent)
+                    if cycle == True:
+                        return True
+                elif color[v] == "G" and parent[u]!=v:
+                    print ("Cycle found", u, v)
+                    return True
+            color[u] = "B"
+            return False
+        
+        is_cyclic = False
+        for u in graph.keys():
+            if color[u] == 'W':
+                is_cyclic = dfs(u, color, parent)
+                if is_cyclic == True:
+                    break
+        
+        if is_cyclic == False:
+            raise GraphCycleError("There is a cycle in the graph")
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
@@ -134,4 +187,15 @@ class GraphProcessor:
             A list of alternative edge ids.
         """
         # put your implementation here
+
+        
+
         pass
+
+graph_processor = GraphProcessor(
+    vertex_ids=vertex_ids,
+    edge_ids=edge_ids,
+    edge_vertex_id_pairs=edge_vertex_id_pairs,
+    edge_enabled=edge_enabled,
+    source_vertex_id=source_vertex_id
+)
