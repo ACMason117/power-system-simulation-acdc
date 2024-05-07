@@ -118,7 +118,9 @@ class GraphProcessor:
         vertex_parents = {}
         # receive adjacency list
         adjacency_list = self.build_adjacency_list(edge_vertex_id_pairs, edge_enabled)
-        self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id)
+        DFS_result = self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id)
+        if DFS_result == 1:
+            raise GraphCycleError("Cycle found")
 
         if len(vertex_visited) != len(vertex_ids):
             raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
@@ -136,12 +138,13 @@ class GraphProcessor:
             visited.append(start_node)
             parent_list[start_node] = parent  # assign parent of node
 
-            for adjacent_vertex in adjacency_list[start_node]:
-                if (adjacent_vertex in visited) & (adjacent_vertex != parent):
-                    raise GraphCycleError("Cycle detected")
-                self.DFS(adjacency_list, visited, start_node, parent_list, adjacent_vertex)
-
-        return
+        for adjacent_vertex in adjacency_list[start_node]:
+            if (adjacent_vertex in visited) and (adjacent_vertex != parent):
+                # Cycle detected, return 1
+                return 1
+        
+        # If no cycle is found
+        return 0
 
     def build_adjacency_list(self, edge_vertex_id_pairs, edge_enabled):
         """
@@ -226,59 +229,50 @@ class GraphProcessor:
         Returns:
             A list of alternative edge ids.
         """
+        # Step 1: Check if the disabled_edge_id is valid
         if disabled_edge_id not in self.edge_ids:
-            raise IDNotFoundError("Disabled edge ID is not a valid edge ID")
+            raise IDNotFoundError("Edge ID not found.")
 
-        if not self.edge_enabled[self.edge_ids.index(disabled_edge_id)]:
-            raise EdgeAlreadyDisabledError("Disabled edge is already disabled")
+        # Step 2: Check if the edge corresponding to disabled_edge_id is currently enabled
+        edge_index = self.edge_ids.index(disabled_edge_id)
+        if not self.edge_enabled[edge_index]:
+            raise EdgeAlreadyDisabledError("Edge is already disabled.")
 
-        # create a copy of the current edge enabled list
-        edge_enabled_copy = self.edge_enabled.copy()
-        # mark the disabled edge as disabled
-        edge_enabled_copy[self.edge_ids.index(disabled_edge_id)] = False
+        # List to store alternative edge ids
+        alternative_edges = []
 
-        # create a copy of the graph processor with the new edge enabled list
-        temp_graph = GraphProcessor(
-            self.vertex_ids.copy(),
-            self.edge_ids.copy(),
-            self.edge_vertex_id_pairs.copy(),
-            edge_enabled_copy,
-            self.source_vertex_id
-        )
+        # Step 3: Build the adjacency list using enabled edges only
+        enabled_edge_vertex_id_pairs = []
+        edge_enabled_short = []
+        for i in range(len(self.edge_ids)):
+            if self.edge_enabled[i]:
+                enabled_edge_vertex_id_pairs.append(self.edge_vertex_id_pairs[i])
+                edge_enabled_short.append(self.edge_enabled[i])
 
-        # run DFS to check if the graph is fully connected
-        vertex_visited = []
-        vertex_parents = {}
-        try:
-            temp_graph.DFS(temp_graph.build_adjacency_list(temp_graph.edge_vertex_id_pairs, edge_enabled_copy),
-                           vertex_visited, float("Nan"), vertex_parents, temp_graph.source_vertex_id)
-        except GraphCycleError:
-            # if the graph contains a cycle, we need to find an alternative edge
-            for edge_id, is_enabled in enumerate(edge_enabled_copy):
-                if not is_enabled:
-                    # if the edge is already disabled, we can try enabling it
-                    edge_enabled_copy[edge_id] = True
-                    temp_graph = GraphProcessor(
-                        self.vertex_ids.copy(),
-                        self.edge_ids.copy(),
-                        self.edge_vertex_id_pairs.copy(),
-                        edge_enabled_copy,
-                        self.source_vertex_id
-                    )
-                    try:
-                        # run DFS again to check if the graph is fully connected
-                        temp_graph.DFS(temp_graph.build_adjacency_list(temp_graph.edge_vertex_id_pairs, edge_enabled_copy),
-                                       vertex_visited, float("Nan"), vertex_parents, temp_graph.source_vertex_id)
-                        # if the graph is fully connected, we have found an alternative edge
-                        return [self.edge_ids[edge_id]]
-                    except GraphCycleError:
-                        # if the graph still contains a cycle, we need to keep searching
-                        edge_enabled_copy[edge_id] = False
-                    # if we have searched all disabled edges and haven't found an alternative,
-                    # the function will return an empty list
+        adjacency_list = self.build_adjacency_list(enabled_edge_vertex_id_pairs, edge_enabled_short)
 
-        return []
+        # Step 4: Iterate through each disabled edge and check if enabling it would make the graph fully connected and acyclic
+        for i, edge_enabled in enumerate(self.edge_enabled):
+            if not edge_enabled:  # Check only disabled edges
+                if self.edge_ids[i] != disabled_edge_id:
+                    # Step 5: Enable the disabled edge temporarily
+                    self.edge_enabled[i] = True
 
+                # Perform Depth First Search (DFS) to check for cycles
+                visited = []
+                parent_list = {}
+                if self.DFS(adjacency_list, visited, None, parent_list, self.source_vertex_id) == 1:
+                    # If a cycle is detected, revert the edge back to disabled and continue to the next edge
+                    self.edge_enabled[i] = False
+                    continue
+                elif self.DFS(adjacency_list, visited, None, parent_list, self.source_vertex_id) == 0:
+                    # Step 6: If enabling a disabled edge satisfies the conditions, add its edge id to the list of alternatives
+                    alternative_edges.append(self.edge_ids[i])
+                    # Revert the edge back to disabled
+                    self.edge_enabled[i] = False
+                    continue
+
+        return alternative_edges
 
 # other functions not dependent on specific class
 
