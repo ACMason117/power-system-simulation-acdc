@@ -141,8 +141,7 @@ class GraphProcessor:
                     if adjacent_vertex in visited:
                         # Cycle detected, return 1
                         return 1
-                    result = self.DFS(adjacency_list, visited, start_node, parent_list, adjacent_vertex)
-                    if result == 1:
+                    if self.DFS(adjacency_list, visited, start_node, parent_list, adjacent_vertex) == 1:
                         return 1
 
         # If no cycle is found
