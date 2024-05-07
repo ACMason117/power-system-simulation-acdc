@@ -142,7 +142,7 @@ class GraphProcessor:
             if (adjacent_vertex in visited) and (adjacent_vertex != parent):
                 # Cycle detected, return 1
                 return 1
-        
+
         # If no cycle is found
         return 0
 
@@ -241,26 +241,28 @@ class GraphProcessor:
         # List to store alternative edge ids
         alternative_edges = []
 
-        # Step 3: Build the adjacency list using enabled edges only
-        enabled_edge_vertex_id_pairs = []
-        edge_enabled_short = []
-        for i in range(len(self.edge_ids)):
-            if self.edge_enabled[i]:
-                enabled_edge_vertex_id_pairs.append(self.edge_vertex_id_pairs[i])
-                edge_enabled_short.append(self.edge_enabled[i])
-
-        adjacency_list = self.build_adjacency_list(enabled_edge_vertex_id_pairs, edge_enabled_short)
-
-        # Step 4: Iterate through each disabled edge and check if enabling it would make the graph fully connected and acyclic
+        # Step 3: Iterate through each disabled edge and check if enabling it would make the graph fully connected and acyclic
         for i, edge_enabled in enumerate(self.edge_enabled):
             if not edge_enabled:  # Check only disabled edges
                 if self.edge_ids[i] != disabled_edge_id:
-                    # Step 5: Enable the disabled edge temporarily
+                    # Step 4: Enable the disabled edge temporarily
                     self.edge_enabled[i] = True
+
+                # Step 5: Build adjacency list
+                enabled_edge_vertex_id_pairs = []
+                edge_enabled_short = []
+                for j in range(len(self.edge_ids)):
+                    if self.edge_enabled[j]:
+                        enabled_edge_vertex_id_pairs.append(self.edge_vertex_id_pairs[j])
+                        edge_enabled_short.append(self.edge_enabled[j])
+                        continue
+
+                adjacency_list = self.build_adjacency_list(enabled_edge_vertex_id_pairs, edge_enabled_short)
 
                 # Perform Depth First Search (DFS) to check for cycles
                 visited = []
                 parent_list = {}
+
                 if self.DFS(adjacency_list, visited, None, parent_list, self.source_vertex_id) == 1:
                     # If a cycle is detected, revert the edge back to disabled and continue to the next edge
                     self.edge_enabled[i] = False
@@ -273,6 +275,7 @@ class GraphProcessor:
                     continue
 
         return alternative_edges
+
 
 # other functions not dependent on specific class
 
