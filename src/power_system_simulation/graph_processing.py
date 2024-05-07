@@ -109,8 +109,8 @@ class GraphProcessor:
             raise IDNotFoundError("Source vertex ID is not a valid vertex ID")
 
         # custom Errors
-        if len(edge_vertex_id_pairs) != len(set(sort_tuple_list(edge_vertex_id_pairs))):
-            raise EdgePairNotUniqueError("Multiple edges connecting same 2 vertices found")
+        #if len(edge_vertex_id_pairs) != len(set(sort_tuple_list(edge_vertex_id_pairs))):
+        #    raise EdgePairNotUniqueError("Multiple edges connecting same 2 vertices found")
 
         # 6. The graph should be fully connected
         # 7. The graph should not contain cycles (checked inside DFS)
@@ -282,12 +282,12 @@ class GraphProcessor:
 # other functions not dependent on specific class
 
 
-def sort_tuple_list(edge_vertex_id_pairs) -> List[Tuple[int, int]]:
-
-    # sort each tuple in ascending order
-    sorted_tuple_list = [tuple(sorted(t)) for t in edge_vertex_id_pairs]
+#def sort_tuple_list(edge_vertex_id_pairs) -> List[Tuple[int, int]]:
+#
+#    # sort each tuple in ascending order
+#    sorted_tuple_list = [tuple(sorted(t)) for t in edge_vertex_id_pairs]
 
     # sort each tuple based on initial value
-    sorted_tuple_list = sorted(sorted_tuple_list, key=lambda x: x[0])
-
-    return sorted_tuple_list
+#    sorted_tuple_list = sorted(sorted_tuple_list, key=lambda x: x[0])
+#
+#    return sorted_tuple_list
