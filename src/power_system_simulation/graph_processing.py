@@ -121,7 +121,7 @@ class GraphProcessor:
         if self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id) == 1:
             raise GraphCycleError("Cycle found")
 
-       # if len(vertex_visited) != len(vertex_ids):
+        # if len(vertex_visited) != len(vertex_ids):
         #    raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
 
         return
@@ -131,7 +131,7 @@ class GraphProcessor:
         Given an GraphProcessor, return Depth First Search visited nodes list and parent list.
         """
 
-       # start DFS from start_node
+        # start DFS from start_node
         if start_node not in visited:  # check if node has been visited
             visited.append(start_node)
             parent_list[start_node] = parent  # assign parent of node

@@ -1,18 +1,19 @@
-import power_system_simulation.graph_processing  as tp
+import power_system_simulation.graph_processing as tp
+
 
 def test_alternative():
     vertex_ids = [0, 2, 4, 6, 10]  # All unique vertex ids
     edge_ids = [1, 3, 5, 7, 8, 9]  # All unique edge ids
     edge_vertex_id_pairs = [
-        (0,2), #edge 1
-        (0,4), #edge 3
-        (0,6), #edge 5
-        (2,4), #edge 7
-        (4,6), #edge 8
-        (2,10) #edge 9
+        (0, 2),  # edge 1
+        (0, 4),  # edge 3
+        (0, 6),  # edge 5
+        (2, 4),  # edge 7
+        (4, 6),  # edge 8
+        (2, 10),  # edge 9
     ]
     edge_enabled = [True, True, True, False, False, True]  # Whether each edge is enabled or disabled
-    source_vertex_id = 0  # ID of the source vertex 
+    source_vertex_id = 0  # ID of the source vertex
     disabled_edge_id = 5
 
     test2 = tp.GraphProcessor(

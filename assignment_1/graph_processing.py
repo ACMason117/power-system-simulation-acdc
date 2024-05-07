@@ -121,7 +121,7 @@ class GraphProcessor:
         if self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id) == 1:
             raise GraphCycleError("Cycle found")
 
-       # if len(vertex_visited) != len(vertex_ids):
+        # if len(vertex_visited) != len(vertex_ids):
         #    raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
 
         return
