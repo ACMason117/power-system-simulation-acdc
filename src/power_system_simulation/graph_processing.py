@@ -131,17 +131,19 @@ class GraphProcessor:
         Given an GraphProcessor, return Depth First Search visited nodes list and parent list.
         """
 
-        # start DFS from start_node
+       # start DFS from start_node
         if start_node not in visited:  # check if node has been visited
-
             visited.append(start_node)
             parent_list[start_node] = parent  # assign parent of node
 
-        for adjacent_vertex in adjacency_list[start_node]:
-            if (adjacent_vertex in visited) and (adjacent_vertex != parent):
-                # Cycle detected, return 1
-                return 1
-            self.DFS(adjacency_list, visited, start_node, parent_list, adjacent_vertex)
+            for adjacent_vertex in adjacency_list[start_node]:
+                if adjacent_vertex != parent:
+                    if adjacent_vertex in visited:
+                        # Cycle detected, return 1
+                        return 1
+                    result = self.DFS(adjacency_list, visited, start_node, parent_list, adjacent_vertex)
+                    if result == 1:
+                        return 1
 
         # If no cycle is found
         return 0
