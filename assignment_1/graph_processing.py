@@ -122,8 +122,8 @@ class GraphProcessor:
         if DFS_result == 1:
             raise GraphCycleError("Cycle found")
 
-        if len(vertex_visited) != len(vertex_ids):
-            raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
+       # if len(vertex_visited) != len(vertex_ids):
+        #    raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
 
         return
 
@@ -248,31 +248,29 @@ class GraphProcessor:
                     # Step 4: Enable the disabled edge temporarily
                     self.edge_enabled[i] = True
 
-                # Step 5: Build adjacency list
-                enabled_edge_vertex_id_pairs = []
-                edge_enabled_short = []
-                for j in range(len(self.edge_ids)):
-                    if self.edge_enabled[j]:
-                        enabled_edge_vertex_id_pairs.append(self.edge_vertex_id_pairs[j])
-                        edge_enabled_short.append(self.edge_enabled[j])
-                        continue
+                    # Step 5: Build adjacency list
+                    enabled_edge_vertex_id_pairs = []
+                    edge_enabled_short = []
+                    for j in range(len(self.edge_ids)):
+                        if self.edge_enabled[j]:
+                            enabled_edge_vertex_id_pairs.append(self.edge_vertex_id_pairs[j])
+                            edge_enabled_short.append(self.edge_enabled[j])
+                            continue
 
-                adjacency_list = self.build_adjacency_list(enabled_edge_vertex_id_pairs, edge_enabled_short)
+                    adjacency_list = self.build_adjacency_list(enabled_edge_vertex_id_pairs, edge_enabled_short)
 
-                # Perform Depth First Search (DFS) to check for cycles
-                visited = []
-                parent_list = {}
+                    # Perform Depth First Search (DFS) to check for cycles
+                    visited = []
+                    parent_list = {}
 
-                if self.DFS(adjacency_list, visited, None, parent_list, self.source_vertex_id) == 1:
-                    # If a cycle is detected, revert the edge back to disabled and continue to the next edge
-                    self.edge_enabled[i] = False
-                    continue
-                elif self.DFS(adjacency_list, visited, None, parent_list, self.source_vertex_id) == 0:
-                    # Step 6: If enabling a disabled edge satisfies the conditions, add its edge id to the list of alternatives
-                    alternative_edges.append(self.edge_ids[i])
-                    # Revert the edge back to disabled
-                    self.edge_enabled[i] = False
-                    continue
+                    if self.DFS(adjacency_list, visited, None, parent_list, self.source_vertex_id) == 1:
+                        # If a cycle is detected, revert the edge back to disabled and continue to the next edge
+                        self.edge_enabled[i] = False
+                    elif self.DFS(adjacency_list, visited, None, parent_list, self.source_vertex_id) == 0:
+                        # Step 6: If enabling a disabled edge satisfies the conditions, add its edge id to the list of alternatives
+                        alternative_edges.append(self.edge_ids[i])
+                        # Revert the edge back to disabled
+                        self.edge_enabled[i] = False
 
         return alternative_edges
 
