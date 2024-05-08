@@ -15,7 +15,6 @@ def test_alternative():
     ]
     edge_enabled = [True, True, True, False, False, True]  # Whether each edge is enabled or disabled
     source_vertex_id = 0  # ID of the source vertex
-    disabled_edge_id = 5
 
     test2 = tp.GraphProcessor(
         vertex_ids=vertex_ids,
@@ -25,5 +24,14 @@ def test_alternative():
         source_vertex_id=source_vertex_id,
     )
 
-    alternative_edges = test2.find_alternative_edges(disabled_edge_id)
+    alternative_edges = test2.find_alternative_edges(1)
+    assert alternative_edges == [7]
+
+    alternative_edges = test2.find_alternative_edges(3)
+    assert alternative_edges == [7,8]
+
+    alternative_edges = test2.find_alternative_edges(5)
     assert alternative_edges == [8]
+
+    alternative_edges = test2.find_alternative_edges(9)
+    assert alternative_edges == []
