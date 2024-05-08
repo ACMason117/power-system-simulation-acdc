@@ -276,6 +276,10 @@ class GraphProcessor:
                         # Revert the edge back to disabled
                         self.edge_enabled[i] = False
 
+        # Revert input edge back to enabled
+        self.edge_enabled[edge_index] = True
+
+        # Return alternative edges list
         return alternative_edges
 
 
