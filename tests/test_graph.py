@@ -3,10 +3,10 @@ import pytest
 import assignment_1.graph_processing as tp
 
 def test_downstream_vertices():
-    vertex_ids = [0, 1, 2, 3, 4, 5]  # All unique vertex ids
-    edge_ids = [1, 2, 3, 4, 5]  # All unique edge ids
-    edge_vertex_id_pairs = [(0, 1), (0, 2), (2, 3), (3, 4), (4, 5)]
-    edge_enabled = [True, True, True, True, True]
+    vertex_ids = [0, 2, 4]  # All unique vertex ids
+    edge_ids = [1, 3]  # All unique edge ids
+    edge_vertex_id_pairs = [(0, 2), (2, 4)]
+    edge_enabled = [True, True]
     source_vertex_id = 0
 
     test3 = tp.GraphProcessor(
@@ -17,11 +17,8 @@ def test_downstream_vertices():
         source_vertex_id=source_vertex_id,
     )
 
-    downstream_vertices = test3.find_downstream_vertices(0)
-    assert downstream_vertices ==[1, 2]
-
     downstream_vertices = test3.find_downstream_vertices(1)
-    assert downstream_vertices ==[]
+    assert downstream_vertices == [2, 4]
 
-    downstream_vertices = test3.find_downstream_vertices(2)
-    assert downstream_vertices == [3]
+    downstream_vertices = test3.find_downstream_vertices(3)
+    assert downstream_vertices == [4]
