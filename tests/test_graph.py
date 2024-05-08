@@ -1,4 +1,4 @@
-#import numpy as np
+# import numpy as np
 import power_system_simulation.graph_processing as tp
 
 
@@ -28,7 +28,7 @@ def test_alternative():
     assert alternative_edges == [7]
 
     alternative_edges = test2.find_alternative_edges(3)
-    assert alternative_edges == [7,8]
+    assert alternative_edges == [7, 8]
 
     alternative_edges = test2.find_alternative_edges(5)
     assert alternative_edges == [8]
