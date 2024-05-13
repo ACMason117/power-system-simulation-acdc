@@ -171,11 +171,6 @@ class GraphProcessor(object):
 
         return adjacency_list
 
-
-
-
-
-
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
         Given an edge id, return all the vertices which are in the downstream of the edge,
@@ -200,11 +195,13 @@ class GraphProcessor(object):
         Returns:
             A list of all downstream vertices.
         """
-        # step 1: run DFS to build parent list 
+        # step 1: run DFS to build parent list
         vertex_visited = []
         vertex_parents = {}
         adjacency_list = self.build_adjacency_list(self.edge_vertex_id_pairs, self.edge_enabled)
-        self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, self.source_vertex_id) # cannot be cyclic, don't check
+        self.DFS(
+            adjacency_list, vertex_visited, float("Nan"), vertex_parents, self.source_vertex_id
+        )  # cannot be cyclic, don't check
 
         # step 2: receive disabled edge
         index_disabled_edge = self.edge_ids.index(edge_id)
@@ -217,7 +214,7 @@ class GraphProcessor(object):
         else:
             # otherwise first vertex must be the child
             downstream_vertex_source = disabled_edge[0]
-        
+
         # step 4: set disabled edge to false
         self.edge_enabled[index_disabled_edge] = False
 
@@ -225,21 +222,18 @@ class GraphProcessor(object):
         vertex_downstream_visited = []
         vertex_downstream_parents = {}
         adjacency_downstream_list = self.build_adjacency_list(self.edge_vertex_id_pairs, self.edge_enabled)
-        self.DFS(adjacency_downstream_list, vertex_downstream_visited, float("Nan"), vertex_downstream_parents, downstream_vertex_source)
+        self.DFS(
+            adjacency_downstream_list,
+            vertex_downstream_visited,
+            float("Nan"),
+            vertex_downstream_parents,
+            downstream_vertex_source,
+        )
 
         # step 6: set disabled edge back to true
         self.edge_enabled[index_disabled_edge] = True
 
-        
-
         return vertex_downstream_visited
-
-
-
-
-
-
-
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
         """
@@ -325,11 +319,8 @@ class GraphProcessor(object):
         return alternative_edges
 
 
-
-
-
-
 # other functions not dependent on specific class
+
 
 def sort_tuple_list(edge_vertex_id_pairs) -> List[Tuple[int, int]]:
 
