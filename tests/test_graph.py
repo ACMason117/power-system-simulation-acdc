@@ -1,6 +1,8 @@
-#import numpy as np
+# import numpy as np
 import pytest
+
 import assignment_1.graph_processing as tp
+
 
 def test_downstream_vertices():
     vertex_ids = [0, 2, 4]  # All unique vertex ids
