@@ -6,8 +6,8 @@ We define a graph processor class with some function skeletons. Test
 
 from typing import List, Tuple
 
-import numpy as np
-import scipy as sp
+# import numpy as np
+# import scipy as sp
 
 
 class IDNotFoundError(Exception):
@@ -123,9 +123,6 @@ class GraphProcessor:
 
         # if len(vertex_visited) != len(vertex_ids):
         #    raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
-
-        if len(vertex_visited) != len(vertex_ids):
-            raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
 
         return
 
@@ -279,6 +276,10 @@ class GraphProcessor:
                         # Revert the edge back to disabled
                         self.edge_enabled[i] = False
 
+        # Revert input edge back to enabled
+        self.edge_enabled[edge_index] = True
+
+        # Return alternative edges list
         return alternative_edges
 
 
