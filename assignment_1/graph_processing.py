@@ -133,7 +133,6 @@ class GraphProcessor(object):
         """
         Given an GraphProcessor, return Depth First Search visited nodes list and parent list.
         """
-
         # start DFS from start_node
         if start_node not in visited:  # check if node has been visited
             visited.append(start_node)
@@ -222,13 +221,17 @@ class GraphProcessor(object):
         vertex_downstream_visited = []
         vertex_downstream_parents = {}
         adjacency_downstream_list = self.build_adjacency_list(self.edge_vertex_id_pairs, self.edge_enabled)
-        self.DFS(
-            adjacency_downstream_list,
-            vertex_downstream_visited,
-            float("Nan"),
-            vertex_downstream_parents,
-            downstream_vertex_source,
-        )
+
+        if downstream_vertex_source not in adjacency_downstream_list.keys():
+            vertex_downstream_visited.append(downstream_vertex_source)
+        else:
+            self.DFS(
+                adjacency_downstream_list,
+                vertex_downstream_visited,
+                float("Nan"),
+                vertex_downstream_parents,
+                downstream_vertex_source,
+            )
 
         # step 6: set disabled edge back to true
         self.edge_enabled[index_disabled_edge] = True
