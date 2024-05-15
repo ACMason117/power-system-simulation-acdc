@@ -51,7 +51,10 @@ line_length = 120
 [tool.pylint.main]
 # Specify a score threshold under which the program will exit with error.
 fail-under = 7
+# Specify max line length
 max-line-length=120
+# Specify maximum number of arguments
+max-args = 7 
 
 # Minimum Python version to use for version dependent checks. Will default to the
 # version used to run pylint.
