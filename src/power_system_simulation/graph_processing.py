@@ -38,7 +38,7 @@ class EdgeAlreadyDisabledError(Exception):
     pass
 
 
-class GraphProcessor:
+class GraphProcessor(object):
     """
     General documentation of this class.
     You need to describe the purpose of this class and the functions in it.
@@ -121,8 +121,9 @@ class GraphProcessor:
         if self.DFS(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id) == 1:
             raise GraphCycleError("Cycle found")
 
-        # if len(vertex_visited) != len(vertex_ids):
-        #    raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
+
+        if len(vertex_visited) != len(vertex_ids):
+            raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
 
         return
 
@@ -192,8 +193,49 @@ class GraphProcessor:
         Returns:
             A list of all downstream vertices.
         """
-        # put your implementation here
-        pass
+        # step 1: run DFS to build parent list
+        vertex_visited = []
+        vertex_parents = {}
+        adjacency_list = self.build_adjacency_list(self.edge_vertex_id_pairs, self.edge_enabled)
+        self.DFS(
+            adjacency_list, vertex_visited, float("Nan"), vertex_parents, self.source_vertex_id
+        )  # cannot be cyclic, don't check
+
+        # step 2: receive disabled edge
+        index_disabled_edge = self.edge_ids.index(edge_id)
+        disabled_edge = self.edge_vertex_id_pairs[index_disabled_edge]
+
+        # step 3: choose new start point (child)
+        if disabled_edge[0] == vertex_parents[disabled_edge[1]]:
+            # if first vertex in edge is parent of second vertex, pick second (child) vertex
+            downstream_vertex_source = disabled_edge[1]
+        else:
+            # otherwise first vertex must be the child
+            downstream_vertex_source = disabled_edge[0]
+
+        # step 4: set disabled edge to false
+        self.edge_enabled[index_disabled_edge] = False
+
+        # step 5: run DFS from new source vertex id
+        vertex_downstream_visited = []
+        vertex_downstream_parents = {}
+        adjacency_downstream_list = self.build_adjacency_list(self.edge_vertex_id_pairs, self.edge_enabled)
+
+        if downstream_vertex_source not in adjacency_downstream_list.keys():
+            vertex_downstream_visited.append(downstream_vertex_source)
+        else:
+            self.DFS(
+                adjacency_downstream_list,
+                vertex_downstream_visited,
+                float("Nan"),
+                vertex_downstream_parents,
+                downstream_vertex_source,
+            )
+
+        # step 6: set disabled edge back to true
+        self.edge_enabled[index_disabled_edge] = True
+
+        return vertex_downstream_visited
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
         """
