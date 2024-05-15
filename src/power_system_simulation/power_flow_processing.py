@@ -9,7 +9,7 @@ class PowerFlow:
     """
     General documentation of this class.
     You need to describe the purpose of this class and the functions in it.
-    We are using an undirected graph in the processor.
+    We are initializing the data here. 
     """
     def __init__(self):
         # Load data upon instantiation
