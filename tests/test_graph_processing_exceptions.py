@@ -1,6 +1,6 @@
 import pytest
 
-from assignment_1.graph_processing import (
+from power_system_simulation.graph_processing import (
     EdgePairNotUniqueError,
     GraphCycleError,
     GraphNotFullyConnectedError,
