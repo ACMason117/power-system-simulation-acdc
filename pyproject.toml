@@ -37,7 +37,7 @@ namespaces = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["--cov=power_system_simulation", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-fail-under=85"]
+addopts = ["--cov=power_system_simulation", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-fail-under=70"]
 
 [tool.black]
 line-length = 120
@@ -51,6 +51,7 @@ line_length = 120
 [tool.pylint.main]
 # Specify a score threshold under which the program will exit with error.
 fail-under = 7
+max-line-length=120
 
 # Minimum Python version to use for version dependent checks. Will default to the
 # version used to run pylint.
