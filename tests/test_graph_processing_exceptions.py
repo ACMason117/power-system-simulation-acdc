@@ -119,7 +119,7 @@ def test_edge_pairs_not_unique_error():
 
 
 def test_graph_not_fully_connected_error():
-    # tests the error for when the graph is not fully connected
+    #tests the error for when the graph is not fully connected
     with pytest.raises(GraphNotFullyConnectedError) as excinfo:
         GraphProcessor([1, 2, 3, 4, 5], [3, 1, 4], [(1, 2), (2, 3), (1, 5)], [True, True, True], 1)
     assert str(excinfo.value) == "Graph not fully connected. Cannot reach all vertices."
@@ -141,7 +141,7 @@ def test_cycle_error():
             [True, True, True, True, True, True, True, True, True],
             1,
         )
-    assert str(excinfo.value) == "Cycle detected"
+    assert str(excinfo.value) == "Cycle found"
     with pytest.raises(GraphCycleError) as excinfo:
         GraphProcessor(
             [1, 2, 3, 4, 5, 6, 7, 8],
@@ -150,7 +150,7 @@ def test_cycle_error():
             [True, True, True, True, True, True, True, True],
             1,
         )
-    assert str(excinfo.value) == "Cycle detected"
+    assert str(excinfo.value) == "Cycle found"
     with pytest.raises(GraphCycleError) as excinfo:
         GraphProcessor(
             [1, 2, 3, 4, 5, 6, 7, 8],
@@ -159,7 +159,7 @@ def test_cycle_error():
             [True, True, True, True, True, True, True, False],
             1,
         )
-    assert str(excinfo.value) == "Cycle detected"
+    assert str(excinfo.value) == "Cycle found"
     with pytest.raises(GraphCycleError) as excinfo:
         GraphProcessor(
             [1, 2, 3, 4, 5, 6, 7, 8],
@@ -168,7 +168,7 @@ def test_cycle_error():
             [True, True, True, True, True, True, True, True, True],
             1,
         )
-    assert str(excinfo.value) == "Cycle detected"
+    assert str(excinfo.value) == "Cycle found"
     with pytest.raises(GraphCycleError) as excinfo:
         GraphProcessor(
             [1, 2, 3, 4, 5, 6, 7, 8],
@@ -177,4 +177,4 @@ def test_cycle_error():
             [True, True, True, True, True, True, True, True],
             5,
         )
-    assert str(excinfo.value) == "Cycle detected"
+    assert str(excinfo.value) == "Cycle found"
