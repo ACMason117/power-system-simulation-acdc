@@ -254,7 +254,7 @@ class GraphProcessor:
         vertex_downstream_parents = {}
         adjacency_downstream_list = self.build_adjacency_list(self.edge_vertex_id_pairs, self.edge_enabled)
 
-        if adjacency_downstream_list[downstream_vertex_source] is None:
+        if downstream_vertex_source not in adjacency_downstream_list.keys():
             vertex_downstream_visited.append(downstream_vertex_source)
         else:
             self.dfs(
