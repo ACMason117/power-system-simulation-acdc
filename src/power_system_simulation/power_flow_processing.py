@@ -5,9 +5,11 @@ In this file the processing of the power system should be done. Power system can
 
 import json
 import pprint
+
 from pandas import DataFrame
 from power_grid_model import PowerGridModel
 from power_grid_model.utils import json_deserialize, json_serialize
+
 
 class PowerFlow:
     """
@@ -16,10 +18,11 @@ class PowerFlow:
     We are initializing the data here.
     """
 
-    def __init__(self, data=None, power_profile=None):
+    def __init__(self, data=None, power_profile=None, reactive_power_profile=None):
         # Load data upon instantiation
         self.data = data
         self.power_profile = power_profile
+        self.reactive_power_profile = reactive_power_profile
 
     def process_data(self):
         """
@@ -36,9 +39,15 @@ class PowerFlow:
 
         serialized_output = json_serialize(output)
         print(serialized_output)
-        
+
         if self.power_profile is not None:
             print("Active Power Profile Data:")
             print(self.power_profile)
         else:
             print("No active power profile data provided.")
+
+        if self.reactive_power_profile is not None:
+            print("Reactive Power Profile Data:")
+            print(self.reactive_power_profile)
+        else:
+            print("No Reactive power profile data provided.")
