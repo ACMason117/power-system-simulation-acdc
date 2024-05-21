@@ -14,7 +14,7 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 # add dependencies of your core package, check the license first!
-dependencies = ['power-grid-model']
+dependencies = ['power-grid-model','fastparquet','pyarrow']
 version = "0.1"
 
 [project.optional-dependencies]
@@ -24,6 +24,8 @@ dev = [
   'isort',
   'pylint',
   'pandas',
+  'pyarrow',
+  'fastparquet',
   'pytest-cov'
 ]
 
