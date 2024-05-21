@@ -23,6 +23,7 @@ dev = [
   'black',
   'isort',
   'pylint',
+  'pandas',
   'pytest-cov'
 ]
 
