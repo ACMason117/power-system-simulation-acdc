@@ -7,16 +7,16 @@ import json
 import pprint
 import warnings
 
-import pyarrow.parquet as pq
-import pyarrow as pa
-import power_grid_model as pgm
 import pandas as pd
+import power_grid_model as pgm
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
     # suppress warning about pyarrow as future required dependency
     from pandas import DataFrame
 
-from power_grid_model import CalculationType, CalculationMethod, PowerGridModel, initialize_array
+from power_grid_model import CalculationMethod, CalculationType, PowerGridModel, initialize_array
 from power_grid_model.utils import json_deserialize, json_serialize
 from power_grid_model.validation import assert_valid_input_data
 from pyarrow import table
@@ -62,28 +62,34 @@ class PowerFlow:
             pd.DataFrame: Power flow solution data.
         """
         # Melt power flow profiles to long format for merging
-        active_profile_long = active_power_profile.melt(id_vars=['Timestamp'], var_name='load_id', value_name='active_load')
-        reactive_profile_long = reactive_power_profile.melt(id_vars=['Timestamp'], var_name='load_id', value_name='reactive_load')
+        active_profile_long = active_power_profile.melt(
+            id_vars=["Timestamp"], var_name="load_id", value_name="active_load"
+        )
+        reactive_profile_long = reactive_power_profile.melt(
+            id_vars=["Timestamp"], var_name="load_id", value_name="reactive_load"
+        )
 
         # Merge the two profiles on 'Timestamp' and 'load_id'
-        merged_profile = pd.merge(active_profile_long, reactive_profile_long, on=['Timestamp', 'load_id'])
+        merged_profile = pd.merge(active_profile_long, reactive_profile_long, on=["Timestamp", "load_id"])
 
         # Initialize an empty load profile
         load_profile = initialize_array("update", "sym_load", (len(merged_profile), 3))
 
         # Set the attributes for the batch calculation
-        load_profile["id"] = merged_profile['load_id'].to_numpy()
-        load_profile["p_specified"] = merged_profile['active_load'].to_numpy()
-        load_profile["q_specified"] = merged_profile['reactive_load'].to_numpy()
+        load_profile["id"] = merged_profile["load_id"].to_numpy()
+        load_profile["p_specified"] = merged_profile["active_load"].to_numpy()
+        load_profile["q_specified"] = merged_profile["reactive_load"].to_numpy()
 
         # Construct the update data
         update_data = {"sym_load": load_profile}
 
         # Run Newton-Raphson power flow
-        output_data = self.model.calculate_power_flow(update_data=update_data, calculation_method=CalculationMethod.newton_raphson)
+        output_data = self.model.calculate_power_flow(
+            update_data=update_data, calculation_method=CalculationMethod.newton_raphson
+        )
 
         return output_data
-    
+
     def aggregate_voltage_table(self, output_data: pd.DataFrame) -> pd.DataFrame:
         """
         Aggregate power flow results into a table with voltage information.
@@ -99,21 +105,24 @@ class PowerFlow:
         grouped_data = output_data.groupby("Timestamp")
 
         for timestamp, group in grouped_data:
-            max_voltage = group['u_pu'].max()
-            min_voltage = group['u_pu'].min()
+            max_voltage = group["u_pu"].max()
+            min_voltage = group["u_pu"].min()
 
             # Get the corresponding node IDs for maximum and minimum p.u. voltage
-            node_id_max = group.loc[group['u_pu'] == max_voltage, 'id'].values[0]
-            node_id_min = group.loc[group['u_pu'] == min_voltage, 'id'].values[0]
+            node_id_max = group.loc[group["u_pu"] == max_voltage, "id"].values[0]
+            node_id_min = group.loc[group["u_pu"] == min_voltage, "id"].values[0]
 
             # Append to voltage table
-            voltage_table = voltage_table.append({
-                "Timestamp": timestamp,
-                "u_pu_max": max_voltage,
-                "id_max": node_id_max,
-                "u_pu_min": min_voltage,
-                "id_min": node_id_min
-            }, ignore_index=True)
+            voltage_table = voltage_table.append(
+                {
+                    "Timestamp": timestamp,
+                    "u_pu_max": max_voltage,
+                    "id_max": node_id_max,
+                    "u_pu_min": min_voltage,
+                    "id_min": node_id_min,
+                },
+                ignore_index=True,
+            )
 
         return voltage_table
 
@@ -132,7 +141,7 @@ class PowerFlow:
 
         # serialized_output = json_serialize(output)
         print(serialized_output)
-    
+
         if self.active_power_profile is not None:
             print("Active Power Profile Data:")
             print(self.active_power_profile)

@@ -41,6 +41,6 @@ class TestPowerFlow(unittest.TestCase):
         print("Running process_data and printing profile data:")
         power_flow_instance.process_data()
 
-    
+
 if __name__ == "__main__":
     unittest.main()
