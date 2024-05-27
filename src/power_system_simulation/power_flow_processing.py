@@ -5,30 +5,17 @@ In this file the processing of the power system should be done. Power system can
 
 import json
 import pprint
-import pandas as pd
-
-from pandas import DataFrame
-from power_grid_model import PowerGridModel
-from power_grid_model.utils import json_deserialize, json_serialize
-
 import time
 from typing import Dict
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+from pandas import DataFrame
+from power_grid_model import CalculationMethod, CalculationType, PowerGridModel, initialize_array
+from power_grid_model.utils import json_deserialize, json_serialize
+from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
 
-from power_grid_model import (
-    PowerGridModel,
-    CalculationType,
-    CalculationMethod,
-    initialize_array
-)
-
-from power_grid_model.validation import (
-    assert_valid_input_data,
-    assert_valid_batch_data
-)
 
 class PowerFlow:
     """
@@ -84,16 +71,18 @@ class PowerFlow:
             if result1["node"]["u_pu"][i] == min_voltage:
                 min_node = result1["node"]["id"][i]
 
-        result.append({
-                'Timestamp':["Node"], # I am not sure about this
-                'Max p.u. voltage': max_voltage,
-                'Max voltage node id': max_node,
-                'Min p.u. voltage': min_voltage,
-                'Min Voltage node id': min_node
-        })
+        result.append(
+            {
+                "Timestamp": ["Node"],  # I am not sure about this
+                "Max p.u. voltage": max_voltage,
+                "Max voltage node id": max_node,
+                "Min p.u. voltage": min_voltage,
+                "Min Voltage node id": min_node,
+            }
+        )
 
         # Convert the list of dictionaries to a Pandas Dataframe
         result_df = pd.DataFrame(result)
         # Set the timestamp column as the index
-        result_df.set_index('Timestamp', inplace=True)
+        result_df.set_index("Timestamp", inplace=True)
         return result_df
