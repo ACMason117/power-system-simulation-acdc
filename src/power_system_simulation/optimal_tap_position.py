@@ -11,14 +11,21 @@ from power_grid_model import PowerGridModel
 from power_grid_model.utils import json_deserialize, json_serialize
 
 
-class optimal_tap_position:
+class OptimalTapPosition:
     """
     General documentation of this class.
     You need to describe the purpose of this class and the functions in it.
     We are initializing the data here.
     """
 
-    def __init__(self, data1=None, meta_data=None, active_power_profile1=None, reactive_power_profile1=None, ev_active_power_profile1=None):
+    def __init__(
+        self,
+        data1=None,
+        meta_data=None,
+        active_power_profile1=None,
+        reactive_power_profile1=None,
+        ev_active_power_profile1=None,
+    ):
         # Load data upon instantiation
         self.data = data1
         self.meta_data = meta_data
@@ -42,9 +49,9 @@ class optimal_tap_position:
         serialized_output = json_serialize(output)
         print(serialized_output)
 
-        if self.power_profile is not None:
+        if self.active_power_profile is not None:
             print("Active Power Profile Data:")
-            print(self.power_profile)
+            print(self.active_power_profile)
         else:
             print("No active power profile data provided.")
 
@@ -53,3 +60,9 @@ class optimal_tap_position:
             print(self.reactive_power_profile)
         else:
             print("No Reactive power profile data provided.")
+
+        if self.ev_active_power_profile is not None:
+            print("Ev active Power Profile Data:")
+            print(self.ev_active_power_profile)
+        else:
+            print("No ev active power profile data provided.")

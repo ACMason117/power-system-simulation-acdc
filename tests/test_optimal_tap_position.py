@@ -4,18 +4,18 @@ import pandas as pd
 import pytest
 
 
-class TestPowerFlow(unittest.TestCase):
+class TestOptimalTapPosition(unittest.TestCase):
 
     def test_process_data(self):
         # Import the PowerFlow class here to avoid circular import
-        from power_system_simulation.optimal_tap_position import optimal_tap_position
+        from power_system_simulation.optimal_tap_position import OptimalTapPosition
 
         # Load data from input_network_data1.json
         with open("src/power_system_simulation/input_network_data1.json") as file:
             test1_data = file.read()
 
         # Load meta data from meta_data.json
-        with open("src/power_system_simulation/meta_data.json") as file:  # Moet nog iets mee gedaan worden
+        with open("src/power_system_simulation/meta_data.json") as file:
             meta_data = file.read()
 
         # Load the Active Power Profile file
@@ -35,7 +35,7 @@ class TestPowerFlow(unittest.TestCase):
                 "Reactive Power Profile file not found. Please ensure 'src/power_system_simulation/reactive_power_profile1.parquet' is in the correct location."
             )
             return
-        
+
         # Load the ev active power profile
         try:
             ev_active_power_profile1 = pd.read_parquet("src/power_system_simulation/ev_active_power_profile1.parquet")
@@ -45,13 +45,17 @@ class TestPowerFlow(unittest.TestCase):
             )
 
         # Instantiate the optimal_tap_position_instance class with test data and power profiles
-        optimal_tap_position_instance = optimal_tap_position(
-            data1=test1_data, meta_data=meta_data, active_power_profile1=active_power_profile1, reactive_power_profile1=reactive_power_profile1, ev_active_power_profile1=ev_active_power_profile1
+        OptimalTapPosition_instance = OptimalTapPosition(
+            data1=test1_data,
+            meta_data=meta_data,
+            active_power_profile1=active_power_profile1,
+            reactive_power_profile1=reactive_power_profile1,
+            ev_active_power_profile1=ev_active_power_profile1,
         )
 
         # Call the method to process the data
         print("Running process_data and printing profile data:")
-        optimal_tap_position_instance.process_data()
+        OptimalTapPosition_instance.process_data()
 
 
 if __name__ == "__main__":
