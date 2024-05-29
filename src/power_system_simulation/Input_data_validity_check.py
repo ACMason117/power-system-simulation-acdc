@@ -40,33 +40,43 @@ class InvalidLVFeederIDError(Exception):
         Exception: _description_
     """
 
+class WrongFromNodeLVFeederError(Exception):
+    """Raises WrongFromNodeLVFeederError if the LV feeder from_node does not correspond with the transformer to_node
+
+    Args:
+        Exception: _description_
+    """
+
 class validity_check:
     
     def __init__(
-        self, grid_data: dict = None, lv_feeders: list = None, active_power_profile: table = None, reactive_power_profile: table = None, EV_pool: table = None
+        self, grid_data: dict = None, lv_feeders: list = None, active_power_profile: table = None, reactive_power_profile: table = None
     ) -> None:
-        
+        #, EV_pool: table = None
         assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
         self.grid_data=grid_data
         self.lv_feeders=lv_feeders
         self.active_power_profile = active_power_profile
         self.reactive_power_profile = reactive_power_profile
-        self.EV_pool=EV_pool
+        #self.EV_pool=EV_pool
 
         # Check if there is exactly one source
-        if len(grid_data['source']) != 1:
+        if len(grid_data["source"]) != 1:
             raise NotExactlyOneSourceError("There is not exactly one source")
         
         # Check if there is exactly one transformer
-        if len(grid_data['transformer']) != 1:
+        if len(grid_data["transformer"]) != 1:
             raise NotExactlyOneTransformerError("There is not exactly one transformer")
         
         # Check if the LV feeder IDs are valid line IDs
-        if lv_feeders not in grid_data['line']['id']:
-            raise InvalidLVFeederIDError("LV feeder IDs are not valid line IDs")
+        for i in lv_feeders:
+            if i not in grid_data["line"]["id"]:
+                raise InvalidLVFeederIDError("LV feeder IDs are not valid line IDs")
         
         # Check if the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
-        for 
+        for i in lv_feeders:
+            if grid_data["line"][i]["from_node"] != grid_data["source"]["to_node"]: 
+                raise WrongFromNodeLVFeederError("The LV Feeder from_node does not correspond with the transformer to_node")
 
         

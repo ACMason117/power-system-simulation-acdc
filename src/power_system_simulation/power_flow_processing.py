@@ -139,8 +139,8 @@ class PowerFlow:
         output = model.calculate_power_flow()
         print(DataFrame(output["node"]))
 
-        # serialized_output = json_serialize(output)
-        print(serialized_output)
+        #serialized_output = json_serialize(output)
+        #print(serialized_output)
 
         if self.active_power_profile is not None:
             print("Active Power Profile Data:")
