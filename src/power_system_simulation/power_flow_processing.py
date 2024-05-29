@@ -8,7 +8,8 @@ import pprint
 import warnings
 
 import pandas as pd
-import power_grid_model as pgm
+
+# import power_grid_model as pgm
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -18,23 +19,25 @@ with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
 
 from power_grid_model import CalculationMethod, CalculationType, PowerGridModel, initialize_array
 from power_grid_model.utils import json_deserialize, json_serialize
-from power_grid_model.validation import assert_valid_input_data
+from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
 from pyarrow import table
 
 
-class ValidationException(Exception):
-    """Power grid model input data not valid.
+class PowerProfileNotFound(Exception):
+    pass
 
-    Args:
-        Exception: Raise error if the input data is invalid.
-    """
+
+class TimestampMismatch(Exception):
+    pass
+
+
+class LoadIDMismatch(Exception):
+    pass
 
 
 class PowerFlow:
 
-    def __init__(
-        self, grid_data: dict = None, active_power_profile: table = None, reactive_power_profile: table = None
-    ) -> None:
+    def __init__(self, grid_data: dict) -> None:
         """Load grid_data in class 'PowerFlow' upon instantiation
 
         Args:
@@ -46,8 +49,11 @@ class PowerFlow:
         assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
         self.grid_data = grid_data
-        self.active_power_profile = active_power_profile
-        self.reactive_power_profile = reactive_power_profile
+
+        # do not delete the next two lines!!!!
+        # self.active_power_profile = active_power_profile
+        # self.reactive_power_profile = reactive_power_profile
+
         self.model = PowerGridModel(self.grid_data)
 
     def batch_powerflow(self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame) -> pd.DataFrame:
@@ -61,27 +67,37 @@ class PowerFlow:
         Returns:
             pd.DataFrame: Power flow solution data.
         """
-        # Melt power flow profiles to long format for merging
-        active_profile_long = active_power_profile.melt(
-            id_vars=["Timestamp"], var_name="load_id", value_name="active_load"
+        # check if any power profile is provided
+        if active_power_profile is None:
+            raise PowerProfileNotFound("No active power profile provided.")
+
+        if reactive_power_profile is None:
+            raise PowerProfileNotFound("No reactive power profile provided.")
+
+        # check if timestamps are equal in value and lengths
+        if active_power_profile.index.to_list() != reactive_power_profile.index.to_list():
+            raise TimestampMismatch("Timestamps of active and reactive power profiles do not match.")
+
+        if active_power_profile.columns.to_list() != reactive_power_profile.columns.to_list():
+            raise LoadIDMismatch("Load IDs in given power profiles do not match")
+
+        load_profile = initialize_array(
+            "update",
+            "sym_load",
+            (len(active_power_profile.index.to_list()), len(active_power_profile.columns.to_list())),
         )
-        reactive_profile_long = reactive_power_profile.melt(
-            id_vars=["Timestamp"], var_name="load_id", value_name="reactive_load"
-        )
 
-        # Merge the two profiles on 'Timestamp' and 'load_id'
-        merged_profile = pd.merge(active_profile_long, reactive_profile_long, on=["Timestamp", "load_id"])
-
-        # Initialize an empty load profile
-        load_profile = initialize_array("update", "sym_load", (len(merged_profile), 3))
-
-        # Set the attributes for the batch calculation
-        load_profile["id"] = merged_profile["load_id"].to_numpy()
-        load_profile["p_specified"] = merged_profile["active_load"].to_numpy()
-        load_profile["q_specified"] = merged_profile["reactive_load"].to_numpy()
+        load_profile["id"] = active_power_profile.columns.tolist()
+        load_profile["p_specified"] = active_power_profile.values.tolist()
+        load_profile["q_specified"] = reactive_power_profile.values.tolist()
 
         # Construct the update data
         update_data = {"sym_load": load_profile}
+
+        # Validate batch data
+        assert_valid_batch_data(
+            input_data=self.grid_data, update_data=update_data, calculation_type=CalculationType.power_flow
+        )
 
         # Run Newton-Raphson power flow
         output_data = self.model.calculate_power_flow(
@@ -126,30 +142,30 @@ class PowerFlow:
 
         return voltage_table
 
-    def process_data(self):
-        """
-        Do the processing of the grid_data here.
-        """
-        pprint.pprint(json.loads(self.grid_data))
-        dataset = json_deserialize(self.grid_data)
-        print("components:", dataset.keys())
-        print(DataFrame(dataset["node"]))
+    # def process_data(self):
+    #     """
+    #     Do the processing of the grid_data here.
+    #     """
+    #     pprint.pprint(json.loads(self.grid_data))
+    #     dataset = json_deserialize(self.grid_data)
+    #     print("components:", dataset.keys())
+    #     print(DataFrame(dataset["node"]))
 
-        model = PowerGridModel(dataset)
-        output = model.calculate_power_flow()
-        print(DataFrame(output["node"]))
+    #     model = PowerGridModel(dataset)
+    #     output = model.calculate_power_flow()
+    #     print(DataFrame(output["node"]))
 
-        # serialized_output = json_serialize(output)
-        print(serialized_output)
+    #     # serialized_output = json_serialize(output)
+    #     print(serialized_output)
 
-        if self.active_power_profile is not None:
-            print("Active Power Profile Data:")
-            print(self.active_power_profile)
-        else:
-            print("No active power profile data provided.")
+    #     if self.active_power_profile is not None:
+    #         print("Active Power Profile Data:")
+    #         print(self.active_power_profile)
+    #     else:
+    #         print("No active power profile data provided.")
 
-        if self.reactive_power_profile is not None:
-            print("Reactive Power Profile Data:")
-            print(self.reactive_power_profile)
-        else:
-            print("No Reactive power profile data provided.")
+    #     if self.reactive_power_profile is not None:
+    #         print("Reactive Power Profile Data:")
+    #         print(self.reactive_power_profile)
+    #     else:
+    #         print("No Reactive power profile data provided.")
