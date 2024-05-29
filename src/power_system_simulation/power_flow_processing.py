@@ -56,7 +56,7 @@ class PowerFlow:
 
         self.model = PowerGridModel(self.grid_data)
 
-    def batch_powerflow(self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame) -> pd.DataFrame:
+    def batch_powerflow(self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame) -> dict:
         """
         Create a batch update dataset and calculate power flow.
 
@@ -106,7 +106,9 @@ class PowerFlow:
 
         return output_data
 
-    def aggregate_voltage_table(self, output_data: pd.DataFrame) -> pd.DataFrame:
+    def aggregate_voltage_table(
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         Aggregate power flow results into a table with voltage information.
 
@@ -116,31 +118,28 @@ class PowerFlow:
         Returns:
             pd.DataFrame: Table with voltage information.
         """
-        voltage_table = pd.DataFrame(columns=["Timestamp", "u_pu_max", "id_max", "u_pu_min", "id_min"])
 
-        grouped_data = output_data.groupby("Timestamp")
+        output_data = self.batch_powerflow(
+            active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
+        )
 
-        for timestamp, group in grouped_data:
-            max_voltage = group["u_pu"].max()
-            min_voltage = group["u_pu"].min()
+        voltage_table = pd.DataFrame()
 
-            # Get the corresponding node IDs for maximum and minimum p.u. voltage
-            node_id_max = group.loc[group["u_pu"] == max_voltage, "id"].values[0]
-            node_id_min = group.loc[group["u_pu"] == min_voltage, "id"].values[0]
-
-            # Append to voltage table
-            voltage_table = voltage_table.append(
-                {
-                    "Timestamp": timestamp,
-                    "u_pu_max": max_voltage,
-                    "id_max": node_id_max,
-                    "u_pu_min": min_voltage,
-                    "id_min": node_id_min,
-                },
-                ignore_index=True,
-            )
+        voltage_table["Timestamp"] = active_power_profile.index.tolist()
+        voltage_table["max_id"] = output_data["node"][
+            :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmax(axis=1).tolist()
+        ]["id"][0, :]
+        voltage_table["u_pu_max"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).max(axis=1).tolist()
+        voltage_table["min_id"] = output_data["node"][
+            :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmin(axis=1).tolist()
+        ]["id"][0, :]
+        voltage_table["u_pu_min"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).min(axis=1).tolist()
 
         return voltage_table
+
+    def aggregate_loading_table(self, output_data: pd.DataFrame) -> pd.DataFrame:
+
+        pass
 
     # def process_data(self):
     #     """
