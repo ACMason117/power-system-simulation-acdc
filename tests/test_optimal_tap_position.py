@@ -12,11 +12,7 @@ class TestOptimalTapPosition(unittest.TestCase):
 
         # Load data from input_network_data1.json
         with open("src/power_system_simulation/input_network_data1.json") as file:
-            test1_data = file.read()
-
-        # Load meta data from meta_data.json
-        with open("src/power_system_simulation/meta_data.json") as file:
-            meta_data = file.read()
+            grid_data = file.read()
 
         # Load the Active Power Profile file
         try:
@@ -46,11 +42,10 @@ class TestOptimalTapPosition(unittest.TestCase):
 
         # Instantiate the optimal_tap_position_instance class with test data and power profiles
         OptimalTapPosition_instance = OptimalTapPosition(
-            data1=test1_data,
-            meta_data=meta_data,
-            active_power_profile1=active_power_profile1,
-            reactive_power_profile1=reactive_power_profile1,
-            ev_active_power_profile1=ev_active_power_profile1,
+            grid_data=grid_data,
+            active_power_profile=active_power_profile1,
+            reactive_power_profile=reactive_power_profile1,
+            ev_active_power_profile=ev_active_power_profile1,
         )
 
         # Call the method to process the data
