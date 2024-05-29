@@ -127,39 +127,3 @@ class OptimalTapPosition:
         )
 
         return output_data
-
-    def aggregate_voltage_table(self, output_data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Aggregate power flow results into a table with voltage information.
-
-        Args:
-            output_data (pd.DataFrame): Output data from power flow calculation.
-
-        Returns:
-            pd.DataFrame: Table with voltage information.
-        """
-        voltage_table = pd.DataFrame(columns=["Timestamp", "u_pu_max", "id_max", "u_pu_min", "id_min"])
-
-        grouped_data = output_data.groupby("Timestamp")
-
-        for timestamp, group in grouped_data:
-            max_voltage = group["u_pu"].max()
-            min_voltage = group["u_pu"].min()
-
-            # Get the corresponding node IDs for maximum and minimum p.u. voltage
-            node_id_max = group.loc[group["u_pu"] == max_voltage, "id"].values[0]
-            node_id_min = group.loc[group["u_pu"] == min_voltage, "id"].values[0]
-
-            # Append to voltage table
-            voltage_table = voltage_table.append(
-                {
-                    "Timestamp": timestamp,
-                    "u_pu_max": max_voltage,
-                    "id_max": node_id_max,
-                    "u_pu_min": min_voltage,
-                    "id_min": node_id_min,
-                },
-                ignore_index=True,
-            )
-
-        return voltage_table
