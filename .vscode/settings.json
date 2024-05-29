@@ -4,5 +4,8 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "autoDocstring.docstringFormat": "google-notypes"
+    "autoDocstring.docstringFormat": "google-notypes",
+    "python.analysis.extraPaths": [
+        "./src/power_system_simulation"
+    ]
 }
