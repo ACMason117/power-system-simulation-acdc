@@ -44,7 +44,6 @@ class OptimalTapPosition:
             grid_data: Power grid input data. Class dict.
             active_power_profile: Active power profile time data. Class pyarrow.table.
             reactive_power_profile: Reactive power profile time data. Class pyarrow.table.
-            ev_active_power_profile: Ev active power profile time date. Class pyarrow.table
         """
 
         assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
@@ -57,18 +56,13 @@ class OptimalTapPosition:
 
         self.model = PowerGridModel(self.grid_data)
 
-    def powerflow(
-        self,
-        active_power_profile1: pd.DataFrame,
-        reactive_power_profile1: pd.DataFrame,
-    ) -> pd.DataFrame:
+    def batch_powerflow(self, active_power_profile1: pd.DataFrame, reactive_power_profile1: pd.DataFrame) -> dict:
         """
-        Calculate power flow.
+        Create a batch update dataset and calculate power flow.
 
         Args:
-            active_power_profile: DataFrame with columns ['Timestamp', '8', '9', '10', ...]
-            reactive_power_profile: DataFrame with columns ['Timestamp', '8', '9', '10', ...]
-            ev_active_power_profile:
+            active_power_profile1: DataFrame with columns ['Timestamp', '8', '9', '10', ...]
+            reactive_power_profile1: DataFrame with columns ['Timestamp', '8', '9', '10', ...]
 
         Returns:
             pd.DataFrame: Power flow solution data.
@@ -80,32 +74,17 @@ class OptimalTapPosition:
         if reactive_power_profile1 is None:
             raise PowerProfileNotFound("No reactive power profile provided.")
 
-        if ev_active_power_profile1 is None:
-            raise PowerProfileNotFound("No ev active power profile provided.")
-
         # check if timestamps are equal in value and lengths
-        if (
-            (active_power_profile1.index.to_list() != reactive_power_profile1.index.to_list())
-            | (reactive_power_profile1.index.to_list() != ev_active_power_profile1.index.to_list())
-            | (active_power_profile1.index.to_list() != ev_active_power_profile1.index.to_list())
-        ):
-            raise TimestampMismatch("Timestamps of active, reactive, ev active power profiles do not match.")
+        if active_power_profile1.index.to_list() != reactive_power_profile1.index.to_list():
+            raise TimestampMismatch("Timestamps of active and reactive power profiles do not match.")
 
-        if (
-            (active_power_profile1.columns.to_list() != reactive_power_profile1.columns.to_list())
-            | (active_power_profile1.columns.to_list() != ev_active_power_profile1.columns.to_list())
-            | (reactive_power_profile1.columns.to_list() != ev_active_power_profile1.columns.to_list())
-        ):
+        if active_power_profile1.columns.to_list() != reactive_power_profile1.columns.to_list():
             raise LoadIDMismatch("Load IDs in given power profiles do not match")
 
         load_profile = initialize_array(
             "update",
             "sym_load",
-            (
-                len(active_power_profile1.index.to_list()),
-                len(active_power_profile1.columns.to_list()),
-                len(ev_active_power_profile1.columns.to_list()),
-            ),
+            (len(active_power_profile1.index.to_list()), len(active_power_profile1.columns.to_list())),
         )
 
         load_profile["id"] = active_power_profile1.columns.tolist()
@@ -126,3 +105,34 @@ class OptimalTapPosition:
         )
 
         return output_data
+
+    def aggregate_voltage_table(
+        self, active_power_profile1: pd.DataFrame, reactive_power_profile1: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Aggregate power flow results into a table with voltage information.
+
+        Args:
+            output_data (pd.DataFrame): Output data from power flow calculation.
+
+        Returns:
+            pd.DataFrame: Table with voltage information.
+        """
+
+        output_data = self.batch_powerflow(
+            active_power_profile1=active_power_profile1, reactive_power_profile1=reactive_power_profile1
+        )
+
+        voltage_table = pd.DataFrame()
+
+        voltage_table["Timestamp"] = active_power_profile1.index.tolist()
+        voltage_table["max_id"] = output_data["node"][
+            :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmax(axis=1).tolist()
+        ]["id"][0, :]
+        voltage_table["u_pu_max"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).max(axis=1).tolist()
+        voltage_table["min_id"] = output_data["node"][
+            :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmin(axis=1).tolist()
+        ]["id"][0, :]
+        voltage_table["u_pu_min"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).min(axis=1).tolist()
+
+        return voltage_table
