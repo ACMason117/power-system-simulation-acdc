@@ -61,7 +61,6 @@ class OptimalTapPosition:
         self,
         active_power_profile1: pd.DataFrame,
         reactive_power_profile1: pd.DataFrame,
-        ev_active_power_profile1: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Calculate power flow.

@@ -34,13 +34,6 @@ class TestOptimalTapPosition(unittest.TestCase):
             )
             return
 
-        # Load the ev active power profile
-        try:
-            ev_active_power_profile1 = pd.read_parquet("src/power_system_simulation/ev_active_power_profile1.parquet")
-        except FileNotFoundError:
-            self.fail(
-                "EV active Power Profile file not found. Please ensure 'src/power_system_simulation/ev_active_power_profile1.parquet' is in the correct location."
-            )
 
         # Instantiate the optimal_tap_position_instance class with test data and power profiles
         optimal_tap_position_instance = OptimalTapPosition(grid_data=grid_data)
