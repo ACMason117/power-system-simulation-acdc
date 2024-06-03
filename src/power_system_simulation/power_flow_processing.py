@@ -137,34 +137,66 @@ class PowerFlow:
 
         return voltage_table
 
-    def aggregate_loading_table(self, output_data: pd.DataFrame) -> pd.DataFrame:
+    def aggregate_loading_table(
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Aggregate power flow results into a table with loading information.
 
-        pass
+        Args:
+            output_data (dict): Output data from power flow calculation.
 
-    # def process_data(self):
-    #     """
-    #     Do the processing of the grid_data here.
-    #     """
-    #     pprint.pprint(json.loads(self.grid_data))
-    #     dataset = json_deserialize(self.grid_data)
-    #     print("components:", dataset.keys())
-    #     print(DataFrame(dataset["node"]))
+        Returns:
+            pd.DataFrame: Table with loading information.
+        """
 
-    #     model = PowerGridModel(dataset)
-    #     output = model.calculate_power_flow()
-    #     print(DataFrame(output["node"]))
+        output_data = self.batch_powerflow(
+            active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
+        )
 
-    #     # serialized_output = json_serialize(output)
-    #     print(serialized_output)
+        line_data = output_data["line"]
 
-    #     if self.active_power_profile is not None:
-    #         print("Active Power Profile Data:")
-    #         print(self.active_power_profile)
-    #     else:
-    #         print("No active power profile data provided.")
+        loading_table = pd.DataFrame()
 
-    #     if self.reactive_power_profile is not None:
-    #         print("Reactive Power Profile Data:")
-    #         print(self.reactive_power_profile)
-    #     else:
-    #         print("No Reactive power profile data provided.")
+        line_ids = line_data["id"][0, :]
+
+        # compute losses with trapezoidal rule
+        p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
+        p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
+
+        # Calculate time differences (dt) for integration
+        time_deltas = active_power_profile.index.to_series().diff().dt.total_seconds().values[1:]
+
+        # Calculate absolute differences for p_from and p_to
+        p_from_diff = p_from.diff().abs().iloc[1:]
+        p_to_diff = p_to.diff().abs().iloc[1:]
+
+        # Calculate average power loss using the trapezoidal rule
+        p_loss = 0.5 * (p_from_diff + p_to_diff)
+
+        # Calculate energy loss
+        e_loss = p_loss.multiply(time_deltas, axis=0).sum() * 1e-3
+
+        # compute maximum and minimum loading
+        loading = pd.DataFrame(line_data["loading"][:, :], columns=line_ids)
+
+        max_loading = loading.max()
+        min_loading = loading.min()
+
+        max_loading_id = loading.idxmax()
+        min_loading_id = loading.idxmin()
+
+        max_loading_time = active_power_profile.index[max_loading_id]
+        min_loading_time = active_power_profile.index[min_loading_id]
+
+        # Construct loading table
+        loading_table["Line ID"] = line_ids
+        loading_table["Energy loss (kWh)"] = e_loss.values
+        loading_table["Max loading (p.u.)"] = max_loading.values
+        loading_table["Max loading timestamp"] = max_loading_time.values
+        loading_table["Min loading (p.u.)"] = min_loading.values
+        loading_table["Min loading timestamp"] = min_loading_time.values
+
+        loading_table.set_index("Line ID", inplace=True)
+
+        return loading_table
