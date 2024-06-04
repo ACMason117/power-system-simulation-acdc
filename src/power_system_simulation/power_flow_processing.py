@@ -7,11 +7,13 @@ import json
 import pprint
 import warnings
 
+import numpy as np
 import pandas as pd
 
 # import power_grid_model as pgm
 import pyarrow as pa
 import pyarrow.parquet as pq
+import scipy as sp
 
 with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
     # suppress warning about pyarrow as future required dependency
@@ -126,14 +128,16 @@ class PowerFlow:
         voltage_table = pd.DataFrame()
 
         voltage_table["Timestamp"] = active_power_profile.index.tolist()
-        voltage_table["max_id"] = output_data["node"][
+        voltage_table["Max_Voltage"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).max(axis=1).tolist()
+        voltage_table["Max_Voltage_Node"] = output_data["node"][
             :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmax(axis=1).tolist()
         ]["id"][0, :]
-        voltage_table["u_pu_max"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).max(axis=1).tolist()
-        voltage_table["min_id"] = output_data["node"][
+        voltage_table["Min_Voltage"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).min(axis=1).tolist()
+        voltage_table["Min_Voltage_Node"] = output_data["node"][
             :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmin(axis=1).tolist()
         ]["id"][0, :]
-        voltage_table["u_pu_min"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).min(axis=1).tolist()
+
+        voltage_table.set_index("Timestamp", inplace=True)
 
         return voltage_table
 
@@ -160,22 +164,19 @@ class PowerFlow:
 
         line_ids = line_data["id"][0, :]
 
-        # compute losses with trapezoidal rule
+        # Extract power data
         p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
         p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
 
-        # Calculate time differences (dt) for integration
-        time_deltas = active_power_profile.index.to_series().diff().dt.total_seconds().values[1:]
+        # Extract power data
+        p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
+        p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
 
-        # Calculate absolute differences for p_from and p_to
-        p_from_diff = p_from.diff().abs().iloc[1:]
-        p_to_diff = p_to.diff().abs().iloc[1:]
-
-        # Calculate average power loss using the trapezoidal rule
-        p_loss = 0.5 * (p_from_diff + p_to_diff)
+        # Calculate power loss
+        p_loss = (p_from + p_to) * 1e-3
 
         # Calculate energy loss
-        e_loss = p_loss.multiply(time_deltas, axis=0).sum() * 1e-3
+        e_loss = sp.integrate.trapezoid(p_loss, dx=1.0, axis=0)
 
         # compute maximum and minimum loading
         loading = pd.DataFrame(line_data["loading"][:, :], columns=line_ids)
@@ -190,13 +191,13 @@ class PowerFlow:
         min_loading_time = active_power_profile.index[min_loading_id]
 
         # Construct loading table
-        loading_table["Line ID"] = line_ids
-        loading_table["Energy loss (kWh)"] = e_loss.values
-        loading_table["Max loading (p.u.)"] = max_loading.values
-        loading_table["Max loading timestamp"] = max_loading_time.values
-        loading_table["Min loading (p.u.)"] = min_loading.values
-        loading_table["Min loading timestamp"] = min_loading_time.values
+        loading_table["Line_ID"] = line_ids
+        loading_table["Total_Loss"] = e_loss
+        loading_table["Max_Loading"] = max_loading.values
+        loading_table["Max_Loading_Timestamp"] = max_loading_time.values
+        loading_table["Min_Loading"] = min_loading.values
+        loading_table["Min_Loading_Timestamp"] = min_loading_time.values
 
-        loading_table.set_index("Line ID", inplace=True)
+        loading_table.set_index("Line_ID", inplace=True)
 
         return loading_table
