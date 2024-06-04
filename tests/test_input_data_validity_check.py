@@ -1,5 +1,9 @@
 import unittest
 
+from power_grid_model import LoadGenType
+from power_grid_model import PowerGridModel
+from power_grid_model import initialize_array
+
 import pandas as pd
 import pytest  # Import pytest
 
@@ -7,6 +11,11 @@ from power_system_simulation.input_data_validity_check import InvalidLVFeederIDE
 from power_system_simulation.power_flow_processing import PowerFlow
 
 def test_validity():
+
+    # node
+    node = initialize_array('input', 'node', 2)
+    node['id'] = [1, 2]
+    node['u_rated'] = [10.5e3, 10.5e3]
     # line
     line = initialize_array('input', 'line', 1)
     line['id'] = [3]
@@ -41,9 +50,10 @@ def test_validity():
         'source': source
     }
 
+    lv_feeders=[2,3]
 
     with pytest.raises(InvalidLVFeederIDError) as excinfo:
-       validity_check(grid_data=test_data, lv_feeders=meta_data[4], active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile)
+       validity_check(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "Vertex IDs are not unique"
 
 # class TestValidityCheck(unittest.TestCase):
