@@ -6,6 +6,7 @@ In this file the processing of the power system should be done. Power system can
 import json
 import pprint
 import warnings
+import numpy as np
 
 import pandas as pd
 
@@ -136,3 +137,43 @@ class OptimalTapPosition:
         voltage_table["u_pu_min"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).min(axis=1).tolist()
 
         return voltage_table
+    
+    
+    def tap_position(self, active_power_profile1: pd.DataFrame, reactive_power_profile1: pd.DataFrame
+    ) -> pd.DataFrame:
+        
+        output_data = self.batch_powerflow(active_power_profile1=active_power_profile1, reactive_power_profile1=reactive_power_profile1)
+
+        a = {}
+        tap_pro = {}
+        for i in range(len(output_data["node"]["id"])):
+            if isinstance(output_data["node"]["id"][i], (list, np.ndarray)):
+                for j in range(len(output_data["node"]["id"][i])):
+                    if output_data["node"]["id"][i][j] == 0:
+                        a[i] = output_data["node"]["u"][i][j]
+            elif output_data["node"]["id"][i] == 0:
+                a[i] = output_data["node"]["u"][i]
+
+        for i in range(len(a)):
+            tap_pro[i] = ((a[i] - self.grid_data["transformer"]["u1"])/self.grid_data["transformer"]["u1"])*100
+        
+        return tap_pro
+    
+    def optimal_tap_voltage(self, active_power_profile1: pd.DataFrame, reactive_power_profile1: pd.DataFrame
+    ) -> pd.DataFrame:
+        tap = 0
+
+        voltage_table = self.aggregate_voltage_table(active_power_profile1=active_power_profile1, reactive_power_profile1=reactive_power_profile1)
+
+        for i in range(len(voltage_table)):
+            u_pu_max = voltage_table["u_pu_max"][i]
+            u_pu_min = voltage_table["u_pu_min"][i]
+            tap_procent_max = (u_pu_max-1)/1*100
+            tap_procent_min = (u_pu_min-1)/1*100
+            tap_max_min = (tap_procent_max + tap_procent_min)/2
+            tap = tap_max_min + tap   
+            
+        tap_value = tap /(len(voltage_table))
+
+        return tap_value
+
