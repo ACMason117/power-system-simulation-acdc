@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 
 import pandas as pd
+import scipy as sp
 from power_grid_model.utils import json_deserialize_from_file
 
 import power_system_simulation.power_flow_processing as pfp

@@ -26,14 +26,20 @@ from pyarrow import table
 
 
 class PowerProfileNotFound(Exception):
+    """Raises error if power profile is not found"""
+
     pass
 
 
 class TimestampMismatch(Exception):
+    """ " Raises error if timestamps of power profiles do no not match"""
+
     pass
 
 
 class LoadIDMismatch(Exception):
+    """ " Raises error if load IDs of power profiles do no not match"""
+
     pass
 
 
@@ -51,10 +57,6 @@ class PowerFlow:
         assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
         self.grid_data = grid_data
-
-        # do not delete the next two lines!!!!
-        # self.active_power_profile = active_power_profile
-        # self.reactive_power_profile = reactive_power_profile
 
         self.model = PowerGridModel(self.grid_data)
 
