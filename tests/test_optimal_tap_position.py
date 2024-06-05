@@ -3,6 +3,7 @@ import unittest
 import pandas as pd
 import pytest
 from power_grid_model.utils import json_deserialize_from_file
+
 import power_system_simulation.optimal_tap_position as otp
 
 # Import the PowerFlow class here to avoid circular import
@@ -11,7 +12,7 @@ from power_system_simulation.optimal_tap_position import OptimalTapPosition
 
 class TestOptimalTapPosition(unittest.TestCase):
 
-    def test_process_data(self):
+    def setUp(self):
 
         # Load data from input_network_data1.json
         self.grid_data = json_deserialize_from_file("src/power_system_simulation/input_network_data1.json")
@@ -44,6 +45,7 @@ class TestOptimalTapPosition(unittest.TestCase):
     def optimal_tap_voltage(self):
         tap_value_voltage = self.otp.optimal_tap_voltage(self.active_power_profile1, self.reactive_power_profile1)
         self.assertIsInstance(tap_value_voltage, dict)
+
 
 if __name__ == "__main__":
     unittest.main()
