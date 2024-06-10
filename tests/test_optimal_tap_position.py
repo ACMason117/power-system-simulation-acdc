@@ -38,13 +38,7 @@ class TestOptimalTapPosition(unittest.TestCase):
             return
 
         # Instantiate the optimal_tap_position_instance class with test data and power profiles
-        optimal_tap_position_instance = OptimalTapPosition(grid_data=self.grid_data)
-
         self.pf = otp.PowerFlow(grid_data=self.grid_data)
-
-    def optimal_tap_voltage(self):
-        tap_value_voltage = self.otp.optimal_tap_voltage(self.active_power_profile1, self.reactive_power_profile1)
-        self.assertIsInstance(tap_value_voltage, dict)
 
 
 if __name__ == "__main__":
