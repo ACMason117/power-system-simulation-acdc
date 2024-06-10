@@ -14,6 +14,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import scipy as sp
+import numpy as np
 
 with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
     # suppress warning about pyarrow as future required dependency
@@ -25,6 +26,17 @@ from power_grid_model.validation import assert_valid_batch_data, assert_valid_in
 from pyarrow import table
 
 from power_system_simulation.power_flow_processing import PowerFlow
+
+from power_grid_model import LoadGenType
+from power_grid_model import (
+    PowerGridModel,
+    CalculationMethod,
+    CalculationType,
+    MeasuredTerminalType,
+    BranchSide,
+    TapChangingStrategy,
+)
+from power_grid_model import initialize_array
 
 
 class PowerProfileNotFound(Exception):
@@ -77,11 +89,15 @@ class OptimalTapPosition:
                         a[i] = output_data["node"]["u"][i][j]
             elif output_data["node"]["id"][i] == 0:
                 a[i] = output_data["node"]["u"][i]
-
+        
+        tap_position = 0
         for i in range(len(a)):
             tap_pro[i] = ((a[i] - self.grid_data["transformer"]["u1"]) / self.grid_data["transformer"]["u1"]) * 100
+            tap_position = tap_pro + tap_position
 
-        return tap_pro
+        Optimal_tap_position = tap_position/(len(output_data["node"]["id"]))
+
+        return Optimal_tap_position
 
     def optimal_tap_voltage(
         self, active_power_profile1: pd.DataFrame, reactive_power_profile1: pd.DataFrame
@@ -103,3 +119,4 @@ class OptimalTapPosition:
         tap_value_voltage = tap / (len(voltage_table))
 
         return tap_value_voltage
+   

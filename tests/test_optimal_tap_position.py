@@ -6,6 +6,9 @@ from power_grid_model.utils import json_deserialize_from_file
 
 import power_system_simulation.optimal_tap_position as otp
 
+from power_grid_model import initialize_array
+import numpy as np
+
 # Import the PowerFlow class here to avoid circular import
 from power_system_simulation.optimal_tap_position import OptimalTapPosition
 
@@ -40,6 +43,6 @@ class TestOptimalTapPosition(unittest.TestCase):
         # Instantiate the optimal_tap_position_instance class with test data and power profiles
         self.pf = otp.PowerFlow(grid_data=self.grid_data)
 
-
 if __name__ == "__main__":
     unittest.main()
+
