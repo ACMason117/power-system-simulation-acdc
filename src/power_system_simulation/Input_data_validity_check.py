@@ -17,8 +17,9 @@ from power_grid_model.utils import json_deserialize, json_serialize
 from power_grid_model.validation import assert_valid_input_data
 from pyarrow import table
 
+
 from power_system_simulation.power_flow_processing import PowerFlow
-from power_system_simulation.graph_processing import GraphProcessor
+from power_system_simulation.graph_processing import GraphProcessor, GraphCycleError, GraphNotFullyConnectedError
 
 class NotExactlyOneSourceError(Exception):
     """Raises MoreThanOneSourceError if there is not exactly one source
@@ -47,6 +48,7 @@ class WrongFromNodeLVFeederError(Exception):
     Args:
         Exception: _description_
     """
+
 
 class validity_check:
     
@@ -77,8 +79,28 @@ class validity_check:
         
         # Check if the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
         for i in lv_feeders:
-            print(grid_data["line"]["id"])
             index=np.where(grid_data["line"]["id"]==i)
             if grid_data["line"][index]["from_node"] != grid_data["transformer"][0]["to_node"]: 
                 raise WrongFromNodeLVFeederError("The LV Feeder from_node does not correspond with the transformer to_node")
 
+        # Check if the graph does not contain cycles
+        edge_vertex_id_pairs=list(zip(grid_data["line"]["from_node"], grid_data["line"]["to_node"]))+list(zip(grid_data["transformer"]["from_node"], grid_data["transformer"]["to_node"]))
+        print(edge_vertex_id_pairs)
+        edge_enabled=[]
+        for i in grid_data["line"]["id"]:
+            index=np.where(grid_data["line"]["id"]==i)
+            if grid_data["line"][index]["from_status"]==1 & grid_data["line"][index]["to_status"]==1:
+                edge_enabled=True
+            else:
+                edge_enabled=False
+        # source_vertex_id=grid_data["source"]["id"]
+        # vertex_ids=grid_data["line"]["id"]
+        # vertex_visited = []
+        # vertex_parents = {}
+        # adjacency_list = GraphProcessor.build_adjacency_list(edge_vertex_id_pairs, edge_enabled)
+        #if GraphProcessor.dfs(adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id) == 1:
+        #    raise GraphCycleError("Cycle found")
+
+        ## 7. The graph should be fully connected
+        #if len(vertex_visited) != len(vertex_ids):
+        #    raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
