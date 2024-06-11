@@ -2,6 +2,7 @@ import json
 import pprint
 import warnings
 
+import numpy as np
 import pandas as pd
 import power_grid_model as pgm
 import pyarrow as pa
@@ -76,8 +77,8 @@ class validity_check:
         
         # Check if the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
         for i in lv_feeders:
-            index=grid_data["line"].keys().index(i)
-            if grid_data["line"][index]["from_node"] != grid_data["source"]["to_node"]: 
+            print(grid_data["line"]["id"])
+            index=np.where(grid_data["line"]["id"]==i)
+            if grid_data["line"][index]["from_node"] != grid_data["transformer"][0]["to_node"]: 
                 raise WrongFromNodeLVFeederError("The LV Feeder from_node does not correspond with the transformer to_node")
 
-        
