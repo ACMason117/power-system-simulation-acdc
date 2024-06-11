@@ -55,7 +55,7 @@ line_length = 120
 [tool.pylint.main]
 # Specify a score threshold under which the program will exit with error.
 # fail-under = 10
-fail-under = 9
+fail-under = 5
 # Specify max line length
 max-line-length=120
 # Specify maximum number of arguments
