@@ -7,11 +7,13 @@ import json
 import pprint
 import warnings
 
+import numpy as np
 import pandas as pd
 
 # import power_grid_model as pgm
 import pyarrow as pa
 import pyarrow.parquet as pq
+import scipy as sp
 
 with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
     # suppress warning about pyarrow as future required dependency
@@ -24,14 +26,20 @@ from pyarrow import table
 
 
 class PowerProfileNotFound(Exception):
+    """Raises error if power profile is not found"""
+
     pass
 
 
 class TimestampMismatch(Exception):
+    """ " Raises error if timestamps of power profiles do no not match"""
+
     pass
 
 
 class LoadIDMismatch(Exception):
+    """ " Raises error if load IDs of power profiles do no not match"""
+
     pass
 
 
@@ -50,13 +58,9 @@ class PowerFlow:
 
         self.grid_data = grid_data
 
-        # do not delete the next two lines!!!!
-        # self.active_power_profile = active_power_profile
-        # self.reactive_power_profile = reactive_power_profile
-
         self.model = PowerGridModel(self.grid_data)
 
-    def batch_powerflow(self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame) -> pd.DataFrame:
+    def batch_powerflow(self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame) -> dict:
         """
         Create a batch update dataset and calculate power flow.
 
@@ -106,7 +110,9 @@ class PowerFlow:
 
         return output_data
 
-    def aggregate_voltage_table(self, output_data: pd.DataFrame) -> pd.DataFrame:
+    def aggregate_voltage_table(
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         Aggregate power flow results into a table with voltage information.
 
@@ -116,56 +122,84 @@ class PowerFlow:
         Returns:
             pd.DataFrame: Table with voltage information.
         """
-        voltage_table = pd.DataFrame(columns=["Timestamp", "u_pu_max", "id_max", "u_pu_min", "id_min"])
 
-        grouped_data = output_data.groupby("Timestamp")
+        output_data = self.batch_powerflow(
+            active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
+        )
 
-        for timestamp, group in grouped_data:
-            max_voltage = group["u_pu"].max()
-            min_voltage = group["u_pu"].min()
+        voltage_table = pd.DataFrame()
 
-            # Get the corresponding node IDs for maximum and minimum p.u. voltage
-            node_id_max = group.loc[group["u_pu"] == max_voltage, "id"].values[0]
-            node_id_min = group.loc[group["u_pu"] == min_voltage, "id"].values[0]
+        voltage_table["Timestamp"] = active_power_profile.index.tolist()
+        voltage_table["Max_Voltage"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).max(axis=1).tolist()
+        voltage_table["Max_Voltage_Node"] = output_data["node"][
+            :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmax(axis=1).tolist()
+        ]["id"][0, :]
+        voltage_table["Min_Voltage"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).min(axis=1).tolist()
+        voltage_table["Min_Voltage_Node"] = output_data["node"][
+            :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmin(axis=1).tolist()
+        ]["id"][0, :]
 
-            # Append to voltage table
-            voltage_table = voltage_table.append(
-                {
-                    "Timestamp": timestamp,
-                    "u_pu_max": max_voltage,
-                    "id_max": node_id_max,
-                    "u_pu_min": min_voltage,
-                    "id_min": node_id_min,
-                },
-                ignore_index=True,
-            )
+        voltage_table.set_index("Timestamp", inplace=True)
 
         return voltage_table
 
-    # def process_data(self):
-    #     """
-    #     Do the processing of the grid_data here.
-    #     """
-    #     pprint.pprint(json.loads(self.grid_data))
-    #     dataset = json_deserialize(self.grid_data)
-    #     print("components:", dataset.keys())
-    #     print(DataFrame(dataset["node"]))
+    def aggregate_loading_table(
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Aggregate power flow results into a table with loading information.
 
-    #     model = PowerGridModel(dataset)
-    #     output = model.calculate_power_flow()
-    #     print(DataFrame(output["node"]))
+        Args:
+            output_data (dict): Output data from power flow calculation.
 
-    #     # serialized_output = json_serialize(output)
-    #     print(serialized_output)
+        Returns:
+            pd.DataFrame: Table with loading information.
+        """
 
-    #     if self.active_power_profile is not None:
-    #         print("Active Power Profile Data:")
-    #         print(self.active_power_profile)
-    #     else:
-    #         print("No active power profile data provided.")
+        output_data = self.batch_powerflow(
+            active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
+        )
 
-    #     if self.reactive_power_profile is not None:
-    #         print("Reactive Power Profile Data:")
-    #         print(self.reactive_power_profile)
-    #     else:
-    #         print("No Reactive power profile data provided.")
+        line_data = output_data["line"]
+
+        loading_table = pd.DataFrame()
+
+        line_ids = line_data["id"][0, :]
+
+        # Extract power data
+        p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
+        p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
+
+        # Extract power data
+        p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
+        p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
+
+        # Calculate power loss
+        p_loss = (p_from + p_to) * 1e-3
+
+        # Calculate energy loss
+        e_loss = sp.integrate.trapezoid(p_loss, dx=1.0, axis=0)
+
+        # compute maximum and minimum loading
+        loading = pd.DataFrame(line_data["loading"][:, :], columns=line_ids)
+
+        max_loading = loading.max()
+        min_loading = loading.min()
+
+        max_loading_id = loading.idxmax()
+        min_loading_id = loading.idxmin()
+
+        max_loading_time = active_power_profile.index[max_loading_id]
+        min_loading_time = active_power_profile.index[min_loading_id]
+
+        # Construct loading table
+        loading_table["Line_ID"] = line_ids
+        loading_table["Total_Loss"] = e_loss
+        loading_table["Max_Loading"] = max_loading.values
+        loading_table["Max_Loading_Timestamp"] = max_loading_time.values
+        loading_table["Min_Loading"] = min_loading.values
+        loading_table["Min_Loading_Timestamp"] = min_loading_time.values
+
+        loading_table.set_index("Line_ID", inplace=True)
+
+        return loading_table
