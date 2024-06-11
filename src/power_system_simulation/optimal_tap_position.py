@@ -25,7 +25,8 @@ from power_grid_model.utils import json_deserialize, json_serialize
 from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
 from pyarrow import table
 
-from power_system_simulation.power_flow_processing import PowerFlow
+from power_system_simulation.power_flow_processing import pfp
+
 
 from power_grid_model import LoadGenType
 from power_grid_model import (
@@ -74,49 +75,45 @@ class OptimalTapPosition:
 
         self.model = PowerGridModel(self.grid_data)
 
+        self.Power_flow_instance = pfp.PowerFlow(self.grid_data)
+
     def tap_position(self, active_power_profile1: pd.DataFrame, reactive_power_profile1: pd.DataFrame) -> pd.DataFrame:
 
-        output_data = PowerFlow.batch_powerflow(
+    
+        output_data = pfp.Power_flow_instance.batch_powerflow(
             active_power_profile=active_power_profile1, reactive_power_profile=reactive_power_profile1
         )
 
-        a = {}
-        tap_pro = {}
+        tap_position = 0
         for i in range(len(output_data["node"]["id"])):
             if isinstance(output_data["node"]["id"][i], (list, np.ndarray)):
                 for j in range(len(output_data["node"]["id"][i])):
-                    if output_data["node"]["id"][i][j] == 0:
-                        a[i] = output_data["node"]["u"][i][j]
-            elif output_data["node"]["id"][i] == 0:
-                a[i] = output_data["node"]["u"][i]
+                    if output_data["node"]["id"][i][j] == self.grid_data['transformer']['from_node']:
+                        tap = ((output_data["node"]["u"][i][j]-self.grid_data['transformer']['u1'])/(self.grid_data['transformer']['u1']))*100
+                        tap_position = tap + tap_position
         
-        tap_position = 0
-        for i in range(len(a)):
-            tap_pro[i] = ((a[i] - self.grid_data["transformer"]["u1"]) / self.grid_data["transformer"]["u1"]) * 100
-            tap_position = tap_pro + tap_position
+        optimial_tap_position = tap_position/(len(output_data["node"]["id"]))
 
-        Optimal_tap_position = tap_position/(len(output_data["node"]["id"]))
-
-        return Optimal_tap_position
+        return optimial_tap_position
 
     def optimal_tap_voltage(
         self, active_power_profile1: pd.DataFrame, reactive_power_profile1: pd.DataFrame
     ) -> pd.DataFrame:
-        tap = 0
-
+        
+        tap_voltage=0
+        
         voltage_table = PowerFlow.aggregate_voltage_table(
             active_power_profile=active_power_profile1, reactive_power_profile=reactive_power_profile1
         )
 
         for i in range(len(voltage_table)):
-            u_pu_max = voltage_table["Max_Voltage"][i]
-            u_pu_min = voltage_table["Min_Voltage"][i]
-            tap_procent_max = (u_pu_max - 1) / 1 * 100
-            tap_procent_min = (u_pu_min - 1) / 1 * 100
-            tap_max_min = (tap_procent_max + tap_procent_min) / 2
-            tap = tap_max_min + tap
+            u_pu_max = voltage_table["Max_Voltage"].iloc[i]
+            u_pu_min = voltage_table["Min_Voltage"].iloc[i]
+            tap_max = ((u_pu_max-1)/1)*100
+            tap_min = ((u_pu_min-1)/1)*100
+            tap_voltage = tap_max+tap_min+tap_voltage
 
-        tap_value_voltage = tap / (len(voltage_table))
-
-        return tap_value_voltage
+        tap_position_voltage = tap_voltage/(2*(len(voltage_table)))
+    
+        return tap_position_voltage
    
