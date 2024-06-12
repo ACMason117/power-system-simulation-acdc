@@ -11,6 +11,8 @@ from power_system_simulation.input_data_validity_check import InvalidLVFeederIDE
 from power_system_simulation.power_flow_processing import PowerFlow
 from power_system_simulation.graph_processing import GraphCycleError
 
+from power_system_simulation.power_system_simulation import PowerSim
+
 def test_InvalidLVFeederIDError():
 
     # node
@@ -156,7 +158,7 @@ def test_NotExactlyOneSourceError():
             'source': source,
             'transformer': transformer
         }
-        validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one source"
 
     with pytest.raises(NotExactlyOneSourceError) as excinfo:
@@ -174,7 +176,7 @@ def test_NotExactlyOneSourceError():
             'source': source,
             'transformer': transformer
         }
-        validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one source"
     
 def test_NotExactlyOneTransformerError():
@@ -249,7 +251,7 @@ def test_NotExactlyOneTransformerError():
             'source': source,
             'transformer': transformer
         }
-        validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one transformer"
 
     with pytest.raises(NotExactlyOneTransformerError) as excinfo:
@@ -283,7 +285,7 @@ def test_NotExactlyOneTransformerError():
             'source': source,
             'transformer': transformer
         }
-        validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one transformer"
     
 def test_WrongFromNodeLVFeederError():
@@ -359,7 +361,7 @@ def test_WrongFromNodeLVFeederError():
             'source': source,
             'transformer': transformer
         }
-        validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "The LV Feeder from_node does not correspond with the transformer to_node"
 
     with pytest.raises(WrongFromNodeLVFeederError) as excinfo:
@@ -377,7 +379,7 @@ def test_WrongFromNodeLVFeederError():
             'source': source,
             'transformer': transformer
         }
-        validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "The LV Feeder from_node does not correspond with the transformer to_node"
 
 def test_CycleError():
@@ -449,7 +451,7 @@ def test_CycleError():
     lv_feeders=[5]
 
     with pytest.raises(GraphCycleError) as excinfo:
-        validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one transformer"
 
     
