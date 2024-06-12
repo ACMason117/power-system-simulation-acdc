@@ -1,17 +1,21 @@
 import unittest
 
-from power_grid_model import LoadGenType
-from power_grid_model import PowerGridModel
-from power_grid_model import initialize_array
-
 import pandas as pd
 import pytest  # Import pytest
+from power_grid_model import LoadGenType, PowerGridModel, initialize_array
 
-#from power_system_simulation.input_data_validity_check import InvalidLVFeederIDError, validity_check, NotExactlyOneSourceError, NotExactlyOneTransformerError, WrongFromNodeLVFeederError  # Import power_system_simpulation.graphy_processing
-from power_system_simulation.power_flow_processing import PowerFlow
 from power_system_simulation.graph_processing import GraphCycleError
 
-from power_system_simulation.power_system_simulation import PowerSim, InvalidLVFeederIDError, NotExactlyOneSourceError, NotExactlyOneTransformerError, WrongFromNodeLVFeederError
+# from power_system_simulation.input_data_validity_check import InvalidLVFeederIDError, validity_check, NotExactlyOneSourceError, NotExactlyOneTransformerError, WrongFromNodeLVFeederError  # Import power_system_simpulation.graphy_processing
+from power_system_simulation.power_flow_processing import PowerFlow
+from power_system_simulation.power_system_simulation import (
+    InvalidLVFeederIDError,
+    NotExactlyOneSourceError,
+    NotExactlyOneTransformerError,
+    PowerSim,
+    WrongFromNodeLVFeederError,
+)
+
 
 def test_InvalidLVFeederIDError():
 
@@ -72,23 +76,18 @@ def test_InvalidLVFeederIDError():
     transformer["tap_size"] = [100]
 
     # all
-    input_data = {
-        'node': node,
-        'line': line,
-        'sym_load': sym_load,
-        'source': source,
-        'transformer': transformer
-    }
+    input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source, "transformer": transformer}
 
     with pytest.raises(InvalidLVFeederIDError) as excinfo:
-       lv_feeders=[2]
-       PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
+        lv_feeders = [2]
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "LV feeder IDs are not valid line IDs"
 
     with pytest.raises(InvalidLVFeederIDError) as excinfo:
-       lv_feeders=[20]
-       PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
+        lv_feeders = [20]
+        PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "LV feeder IDs are not valid line IDs"
+
 
 def test_NotExactlyOneSourceError():
 
@@ -141,7 +140,7 @@ def test_NotExactlyOneSourceError():
     transformer["tap_max"] = [9]
     transformer["tap_size"] = [100]
 
-    lv_feeders=[]
+    lv_feeders = []
 
     with pytest.raises(NotExactlyOneSourceError) as excinfo:
         # source
@@ -151,13 +150,7 @@ def test_NotExactlyOneSourceError():
         source["status"] = [1, 1]
         source["u_ref"] = [1.0, 1.0]
         # all
-        input_data = {
-            'node': node,
-            'line': line,
-            'sym_load': sym_load,
-            'source': source,
-            'transformer': transformer
-        }
+        input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source, "transformer": transformer}
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one source"
 
@@ -169,16 +162,11 @@ def test_NotExactlyOneSourceError():
         source["status"] = []
         source["u_ref"] = []
         # all
-        input_data = {
-            'node': node,
-            'line': line,
-            'sym_load': sym_load,
-            'source': source,
-            'transformer': transformer
-        }
+        input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source, "transformer": transformer}
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one source"
-    
+
+
 def test_NotExactlyOneTransformerError():
 
     # node
@@ -214,7 +202,7 @@ def test_NotExactlyOneTransformerError():
     source["status"] = [1]
     source["u_ref"] = [1.0]
 
-    lv_feeders=[5]
+    lv_feeders = [5]
 
     with pytest.raises(NotExactlyOneTransformerError) as excinfo:
         # node
@@ -223,7 +211,7 @@ def test_NotExactlyOneTransformerError():
         node["u_rated"] = [1e4, 4e2, 4e2, 4e2]
         # transformer
         transformer = initialize_array("input", "transformer", 2)
-        transformer["id"] = [3,10]
+        transformer["id"] = [3, 10]
         transformer["from_node"] = [2, 6]
         transformer["to_node"] = [4, 8]
         transformer["from_status"] = [1, 1]
@@ -244,13 +232,7 @@ def test_NotExactlyOneTransformerError():
         transformer["tap_max"] = [9, 9]
         transformer["tap_size"] = [100, 100]
         # all
-        input_data = {
-            'node': node,
-            'line': line,
-            'sym_load': sym_load,
-            'source': source,
-            'transformer': transformer
-        }
+        input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source, "transformer": transformer}
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one transformer"
 
@@ -278,16 +260,11 @@ def test_NotExactlyOneTransformerError():
         transformer["tap_max"] = []
         transformer["tap_size"] = []
         # all
-        input_data = {
-            'node': node,
-            'line': line,
-            'sym_load': sym_load,
-            'source': source,
-            'transformer': transformer
-        }
+        input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source, "transformer": transformer}
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "There is not exactly one transformer"
-    
+
+
 def test_WrongFromNodeLVFeederError():
 
     # node
@@ -344,23 +321,17 @@ def test_WrongFromNodeLVFeederError():
     transformer["tap_max"] = [9]
     transformer["tap_size"] = [100]
 
-    lv_feeders=[5]
+    lv_feeders = [5]
 
     with pytest.raises(WrongFromNodeLVFeederError) as excinfo:
         # line
         line["from_node"] = [6, 4]
         line["to_node"] = [8, 6]
-        #transformer
+        # transformer
         transformer["from_node"] = [2]
         transformer["to_node"] = [4]
         # all
-        input_data = {
-            'node': node,
-            'line': line,
-            'sym_load': sym_load,
-            'source': source,
-            'transformer': transformer
-        }
+        input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source, "transformer": transformer}
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "The LV Feeder from_node does not correspond with the transformer to_node"
 
@@ -368,19 +339,14 @@ def test_WrongFromNodeLVFeederError():
         # line
         line["from_node"] = [4, 4]
         line["to_node"] = [6, 8]
-        #transformer
+        # transformer
         transformer["from_node"] = [2]
         transformer["to_node"] = [8]
         # all
-        input_data = {
-            'node': node,
-            'line': line,
-            'sym_load': sym_load,
-            'source': source,
-            'transformer': transformer
-        }
+        input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source, "transformer": transformer}
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "The LV Feeder from_node does not correspond with the transformer to_node"
+
 
 def test_CycleError():
 
@@ -440,15 +406,9 @@ def test_CycleError():
     transformer["tap_max"] = [9]
     transformer["tap_size"] = [100]
     # all
-    input_data = {
-        'node': node,
-        'line': line,
-        'sym_load': sym_load,
-        'source': source,
-        'transformer': transformer
-    }
+    input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source, "transformer": transformer}
 
-    lv_feeders=[5]
+    lv_feeders = [5]
 
     with pytest.raises(GraphCycleError) as excinfo:
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
