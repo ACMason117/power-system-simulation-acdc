@@ -7,11 +7,11 @@ from power_grid_model import initialize_array
 import pandas as pd
 import pytest  # Import pytest
 
-from power_system_simulation.input_data_validity_check import InvalidLVFeederIDError, validity_check, NotExactlyOneSourceError, NotExactlyOneTransformerError, WrongFromNodeLVFeederError  # Import power_system_simpulation.graphy_processing
+#from power_system_simulation.input_data_validity_check import InvalidLVFeederIDError, validity_check, NotExactlyOneSourceError, NotExactlyOneTransformerError, WrongFromNodeLVFeederError  # Import power_system_simpulation.graphy_processing
 from power_system_simulation.power_flow_processing import PowerFlow
 from power_system_simulation.graph_processing import GraphCycleError
 
-from power_system_simulation.power_system_simulation import PowerSim
+from power_system_simulation.power_system_simulation import PowerSim, InvalidLVFeederIDError, NotExactlyOneSourceError, NotExactlyOneTransformerError, WrongFromNodeLVFeederError
 
 def test_InvalidLVFeederIDError():
 
@@ -82,12 +82,12 @@ def test_InvalidLVFeederIDError():
 
     with pytest.raises(InvalidLVFeederIDError) as excinfo:
        lv_feeders=[2]
-       validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+       PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "LV feeder IDs are not valid line IDs"
 
     with pytest.raises(InvalidLVFeederIDError) as excinfo:
        lv_feeders=[20]
-       validity_check(grid_data=input_data, lv_feeders=lv_feeders)
+       PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "LV feeder IDs are not valid line IDs"
 
 def test_NotExactlyOneSourceError():
@@ -387,7 +387,7 @@ def test_CycleError():
     # node
     node = initialize_array("input", "node", 3)
     node["id"] = [2, 4, 6]
-    node["u_rated"] = [1e4, 4e2, 4e2]
+    node["u_rated"] = [4e2, 4e2, 4e2]
 
     # load
     sym_load = initialize_array("input", "sym_load", 1)
@@ -452,7 +452,4 @@ def test_CycleError():
 
     with pytest.raises(GraphCycleError) as excinfo:
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
-    assert str(excinfo.value) == "There is not exactly one transformer"
-
-    
-    
+    assert str(excinfo.value) == "Cycle found"
