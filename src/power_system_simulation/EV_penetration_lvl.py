@@ -9,13 +9,19 @@ def process_evs(number_of_houses, number_of_feeders, penetration_level):
     evs_per_feeder = math.floor(total_evs / number_of_feeders)
     print(f"EVs per feeder: {evs_per_feeder}")
 
-    # import data
-
-
     grid_data = json_deserialize_from_file("input_network_data.json")
     active_power_profile = pd.read_parquet("active_power_profile.parquet")
     reactive_power_profile = pd.read_parquet("reactive_power_profile.parquet")
-    # Randomly select houses for EV assignment within each feeder
+
+    # import all the data
+
+    # Find all LV feeder IDs 
+    '''
+    1. Find transformer
+    2. Set all lines connected after transformer as LV feeder
+    '''
+    # Run downstream vertices and fin all sym_loads per LV feeder
+    # Randomly select houses for EV assignment within each feeder, so randomly give a charging profile to each
 
     # these values should be given as an input from another file
 
