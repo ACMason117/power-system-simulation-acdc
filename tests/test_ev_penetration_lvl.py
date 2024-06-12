@@ -2,8 +2,10 @@
 
 import unittest
 from power_system_simulation.EV_penetration_lvl import process_evs
+import pandas as pd
+import power_system_simulation.power_flow_processing as pfp
 
-class TestProcessEVs(unittest.TestCase):
+class TestProcessEVs(unittest.TestCase): #test EV penetration is an integer
 
     def test_process_evs(self):
         # Define input data
