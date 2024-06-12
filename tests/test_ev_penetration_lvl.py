@@ -19,5 +19,7 @@ class TestProcessEVs(unittest.TestCase):
         # Check that the evs_per_feeder is an integer
         self.assertIsInstance(evs_per_feeder, int)
 
+
+
 if __name__ == "__main__":
     unittest.main()
