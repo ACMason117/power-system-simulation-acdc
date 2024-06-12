@@ -1,11 +1,21 @@
 import warnings
 
 import numpy as np
+import pandas as pd
+import power_grid_model as pgm
+import pyarrow as pa
+import pyarrow.parquet as pq
+from pyarrow import table
+
 from power_grid_model import CalculationType
 from power_grid_model.validation import assert_valid_input_data
 
 import power_system_simulation.graph_processing as gp
 import power_system_simulation.power_flow_processing as pfp
+
+with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
+    # suppress warning about pyarrow as future required dependency
+    from pandas import DataFrame
 
 
 # write exceptions here
@@ -42,17 +52,18 @@ class WrongFromNodeLVFeederError(Exception):
 
 
 class PowerSim:
-    def __init__(self, grid_data: dict, lv_feeders: list = None) -> None:
+    def __init__(self, grid_data: dict, lv_feeders: list = None, active_power_profile: pd.DataFrame = None, reactive_power_profile: pd.DataFrame = None) -> None:
         self.PowerSimModel = pfp.PowerFlow(grid_data=grid_data)
+        #, EV_Pool: pd.DataFrame = None
 
         from power_system_simulation.graph_processing import GraphProcessor
 
-        # assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
+        #assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
         self.grid_data = grid_data
         self.lv_feeders = lv_feeders
-        # self.active_power_profile = active_power_profile
-        # self.reactive_power_profile = reactive_power_profile
+        self.active_power_profile = active_power_profile
+        self.reactive_power_profile = reactive_power_profile
         # self.EV_pool=EV_pool
 
         # Check if there is exactly one source
@@ -104,10 +115,10 @@ class PowerSim:
         ):
             raise gp.GraphCycleError("Cycle found")
 
-        # 7. The graph should be fully connected
-        # if len(vertex_visited) != len(vertex_ids):
-        #    raise GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
-        # assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
+        #7. The graph should be fully connected
+        if len(vertex_visited) != len(vertex_ids):
+           raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
+        assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
     def example_code(self):
         print("Who reads trek een bak")
