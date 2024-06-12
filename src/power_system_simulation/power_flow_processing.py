@@ -156,10 +156,11 @@ class PowerFlow:
     def aggregate_loading_table(
         self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0
     ) -> pd.DataFrame:
-        
 
         output_data = self.batch_powerflow(
-            active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile, tap_value=tap_value
+            active_power_profile=active_power_profile,
+            reactive_power_profile=reactive_power_profile,
+            tap_value=tap_value,
         )
 
         line_data = output_data["line"]

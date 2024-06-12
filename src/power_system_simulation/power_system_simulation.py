@@ -8,6 +8,7 @@ import power_flow_processing as pfp
 class TotalEnergyLoss:
     pass
 
+
 class VoltageDeviation:
     pass
 
@@ -46,25 +47,30 @@ class PowerSim:
             # )
 
             if opt_criteria == TotalEnergyLoss:
-                energy_loss_aggregate[f"{i}"] = sum( (self.PowerSimModel.aggregate_loading_table(
-                    active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile, tap_value=i
-                ) )['Total_Loss'] )
+                energy_loss_aggregate[f"{i}"] = sum(
+                    (
+                        self.PowerSimModel.aggregate_loading_table(
+                            active_power_profile=active_power_profile,
+                            reactive_power_profile=reactive_power_profile,
+                            tap_value=i,
+                        )
+                    )["Total_Loss"]
+                )
 
             elif opt_criteria == VoltageDeviation:
                 voltage_table[f"{i}"] = self.PowerSimModel.aggregate_voltage_table(
                     active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
                 )
-                voltage_deviation[f"{i}"] = max( abs(voltage_table[i]["Min_Voltage"]-1), abs(voltage_table[i]["Max_Voltage"]-1) )
+                voltage_deviation[f"{i}"] = sum(
+                    (pd.DataFrame(voltage_table[f"{i}"][["Max_Voltage", "Min_Voltage"]] - 1).max(axis=1)).tolist()
+                ) / len((pd.DataFrame(voltage_table[f"{i}"][["Max_Voltage", "Min_Voltage"]] - 1).max(axis=1)).tolist())
 
         if opt_criteria == TotalEnergyLoss:
-            optimal_tap = min(energy_loss_aggregate, key=lambda k: energy_loss_aggregate[k])
-            print(type(optimal_tap))
-            print(optimal_tap)
+            optimal_tap = int(min(energy_loss_aggregate, key=lambda k: energy_loss_aggregate[k]))
+
         elif opt_criteria == VoltageDeviation:
-            print(voltage_deviation)
+            # print(pd.DataFrame(voltage_deviation.keys()))
+            optimal_tap = int(min(voltage_deviation, key=lambda k: voltage_deviation[k]))
+            # print(optimal_tap)
 
-
-
-        # print(energy_loss_aggregate)
-
-            return optimal_tap
+        return optimal_tap
