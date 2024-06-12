@@ -12,6 +12,7 @@ from power_system_simulation.power_flow_processing import PowerFlow
 from power_system_simulation.graph_processing import GraphProcessor, GraphCycleError, GraphNotFullyConnectedError
 
 # write exceptions here
+class NotExactlyOneSourceError(Exception):
     """Raises MoreThanOneSourceError if there is not exactly one source
 
     Args:
