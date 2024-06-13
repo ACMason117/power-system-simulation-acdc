@@ -52,9 +52,9 @@ class WrongFromNodeLVFeederError(Exception):
 
 
 class PowerSim:
-    def __init__(self, grid_data: dict, lv_feeders: list = None, active_power_profile: pd.DataFrame = None, reactive_power_profile: pd.DataFrame = None) -> None:
+    def __init__(self, grid_data: dict, lv_feeders: list = None, active_power_profile: pd.DataFrame = None, reactive_power_profile: pd.DataFrame = None, EV_pool: pd.DataFrame = None) -> None:
         self.PowerSimModel = pfp.PowerFlow(grid_data=grid_data)
-        #, EV_Pool: pd.DataFrame = None
+        
 
         from power_system_simulation.graph_processing import GraphProcessor
 
@@ -64,7 +64,7 @@ class PowerSim:
         self.lv_feeders = lv_feeders
         self.active_power_profile = active_power_profile
         self.reactive_power_profile = reactive_power_profile
-        # self.EV_pool=EV_pool
+        self.EV_pool = EV_pool
 
         # Check if there is exactly one source
         if len(grid_data["source"]) != 1:
@@ -119,6 +119,25 @@ class PowerSim:
         if len(vertex_visited) != len(vertex_ids):
            raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
         assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
+
+        # check if any power profile is provided
+        if active_power_profile is None:
+            raise pfp.PowerProfileNotFound("No active power profile provided.")
+
+        if reactive_power_profile is None:
+            raise pfp.PowerProfileNotFound("No reactive power profile provided.")
+
+        # check if timestamps are equal in value and lengths
+        if active_power_profile.index.to_list() != reactive_power_profile.index.to_list():
+            raise pfp.TimestampMismatch("Timestamps of active and reactive power profiles do not match.")
+        
+        if active_power_profile.index.to_list() != EV_pool.index.to_list():
+            raise pfp.TimestampMismatch("Timestamps of active and EV profiles do not match.")
+
+        if active_power_profile.columns.to_list() != EV_pool.columns.to_list():
+            raise pfp.LoadIDMismatch("Load IDs in given active and EV profiles do not match")
+        
+
 
     def example_code(self):
         print("Who reads trek een bak")
