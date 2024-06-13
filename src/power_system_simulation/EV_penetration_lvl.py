@@ -9,9 +9,9 @@ def process_evs(number_of_houses, number_of_feeders, penetration_level):
     evs_per_feeder = math.floor(total_evs / number_of_feeders)
     print(f"EVs per feeder: {evs_per_feeder}")
 
-    grid_data = json_deserialize_from_file("input_network_data.json")
-    active_power_profile = pd.read_parquet("active_power_profile.parquet")
-    reactive_power_profile = pd.read_parquet("reactive_power_profile.parquet")
+    grid_data = json_deserialize_from_file("input_network_data.json, engine='pyarrow'")
+    active_power_profile = pd.read_parquet("active_power_profile.parquet, engine='pyarrow'")
+    reactive_power_profile = pd.read_parquet("reactive_power_profile.parquet, engine='pyarrow'")
 
     # import all the data
 
