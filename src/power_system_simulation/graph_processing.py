@@ -110,7 +110,6 @@ class GraphProcessor:
         self.edge_vertex_id_pairs = edge_vertex_id_pairs
         self.edge_enabled = edge_enabled
         self.source_vertex_id = source_vertex_id
-
         # 1. vertex_ids and edge_ids should be unique
         if len(set(vertex_ids)) != len(vertex_ids):
             raise IDNotUniqueError("Vertex IDs are not unique")
@@ -124,18 +123,19 @@ class GraphProcessor:
         # 3. edge_vertex_id_pairs should contain valid vertex ids
         for i in range(len(edge_ids)):
             vertex1, vertex2 = edge_vertex_id_pairs[i]
-
+         
             if vertex1 not in vertex_ids or vertex2 not in vertex_ids:
                 raise IDNotFoundError("Edge-vertex ID pair contains non-valid vertex ID")
-
+           
         # 4. edge_enabled should have the same length as edge_ids
         if len(edge_enabled) != len(edge_ids):
             raise InputLengthDoesNotMatchError("Length of enabled edge list does not match edge ID list")
 
         # 5. source_vertex_id should be a valid vertex id
+        """
         if source_vertex_id not in vertex_ids:
             raise IDNotFoundError("Source vertex ID is not a valid vertex ID")
-
+        """
         # custom Errors
         if len(edge_vertex_id_pairs) != len(set(sort_tuple_list(edge_vertex_id_pairs))):
             raise EdgePairNotUniqueError("Multiple edges connecting same 2 vertices found")
@@ -225,7 +225,7 @@ class GraphProcessor:
         """
         if edge_id not in self.edge_ids:
             raise IDNotFoundError("Edge ID not found in graph.")
-
+        
         # step 1: run dfs to build parent list
         vertex_visited = []
         vertex_parents = {}
@@ -308,7 +308,7 @@ class GraphProcessor:
         # Step 1: Check if the disabled_edge_id is valid
         if disabled_edge_id not in self.edge_ids:
             raise IDNotFoundError("Edge ID not found.")
-
+        
         # Step 2: Check if the edge corresponding to disabled_edge_id is currently enabled
         edge_index = self.edge_ids.index(disabled_edge_id)
         if not self.edge_enabled[edge_index]:
