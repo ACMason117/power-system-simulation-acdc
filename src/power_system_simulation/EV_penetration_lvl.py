@@ -1,9 +1,11 @@
-import os
 import math
+import os
+
+import graph_processing as tp
 import pandas as pd
-import graph_processing as tp  
-from power_grid_model.utils import json_deserialize_from_file
 import power_flow_processing as pfp
+from power_grid_model.utils import json_deserialize_from_file
+
 
 def process_evs(number_of_houses, number_of_feeders, penetration_level):
     # Calculate the total number of EVs and the number per feeder
@@ -16,7 +18,7 @@ def process_evs(number_of_houses, number_of_feeders, penetration_level):
     grid_data_path = os.path.join(script_dir, "Assigment3_data\input_network_data.json")
     active_power_profile_path = os.path.join(script_dir, "active_power_profile.parquet")
     reactive_power_profile_path = os.path.join(script_dir, "reactive_power_profile.parquet")
-    
+
     # Import data
     grid_data = json_deserialize_from_file(grid_data_path)
     active_power_profile = pd.read_parquet(active_power_profile_path)
