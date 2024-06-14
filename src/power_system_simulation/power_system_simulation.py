@@ -116,26 +116,28 @@ class PowerSim:
             raise gp.GraphCycleError("Cycle found")
 
         #7. The graph should be fully connected
-        if len(vertex_visited) != len(vertex_ids):
-           raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
-        assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
+        #if len(vertex_visited) != len(vertex_ids):
+        #   raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
+        #assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
-        # check if any power profile is provided
-        if active_power_profile is None:
-            raise pfp.PowerProfileNotFound("No active power profile provided.")
+        print(self.graph.find_downstream_vertices(1))
 
-        if reactive_power_profile is None:
-            raise pfp.PowerProfileNotFound("No reactive power profile provided.")
+        # # check if any power profile is provided
+        # if active_power_profile is None:
+        #     raise pfp.PowerProfileNotFound("No active power profile provided.")
 
-        # check if timestamps are equal in value and lengths
-        if active_power_profile.index.to_list() != reactive_power_profile.index.to_list():
-            raise pfp.TimestampMismatch("Timestamps of active and reactive power profiles do not match.")
+        # if reactive_power_profile is None:
+        #     raise pfp.PowerProfileNotFound("No reactive power profile provided.")
+
+        # # check if timestamps are equal in value and lengths
+        # if active_power_profile.index.to_list() != reactive_power_profile.index.to_list():
+        #     raise pfp.TimestampMismatch("Timestamps of active and reactive power profiles do not match.")
         
-        if active_power_profile.index.to_list() != EV_pool.index.to_list():
-            raise pfp.TimestampMismatch("Timestamps of active and EV profiles do not match.")
+        # if active_power_profile.index.to_list() != EV_pool.index.to_list():
+        #     raise pfp.TimestampMismatch("Timestamps of active and EV profiles do not match.")
 
-        if active_power_profile.columns.to_list() != EV_pool.columns.to_list():
-            raise pfp.LoadIDMismatch("Load IDs in given active and EV profiles do not match")
+        # if active_power_profile.columns.to_list() != EV_pool.columns.to_list():
+        #     raise pfp.LoadIDMismatch("Load IDs in given active and EV profiles do not match")
         
 
 

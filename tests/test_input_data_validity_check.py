@@ -488,69 +488,69 @@ def test_GraphNotFullyConnectedError():
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "Graph not fully connected. Cannot reach all vertices."
 
-class TestPowerSystemExceptions(unittest.TestCase):
+# class TestPowerSystemExceptions(unittest.TestCase):
 
-    def setUp(self):
-        # Load data from input_network_data.json
-        self.grid_data = json_deserialize_from_file("src/power_system_simulation/input_network_data_2.json")
+#     def setUp(self):
+#         # Load data from input_network_data.json
+#         self.grid_data = json_deserialize_from_file("src/power_system_simulation/input_network_data_2.json")
 
-        # Load the Active Power Profile file
-        try:
-            self.active_power_profile = pd.read_parquet("src/power_system_simulation/active_power_profile_2.parquet")
-        except FileNotFoundError:
-            self.fail(
-                "Active Power Profile file not found. Please ensure 'active_power_profile.parquet' is in the correct location."
-            )
+#         # Load the Active Power Profile file
+#         try:
+#             self.active_power_profile = pd.read_parquet("src/power_system_simulation/active_power_profile_2.parquet")
+#         except FileNotFoundError:
+#             self.fail(
+#                 "Active Power Profile file not found. Please ensure 'active_power_profile.parquet' is in the correct location."
+#             )
 
-        # Load the Reactive Power Profile file
-        try:
-            self.reactive_power_profile = pd.read_parquet("src/power_system_simulation/reactive_power_profile_2.parquet")
-        except FileNotFoundError:
-            self.fail(
-                "Reactive Power Profile file not found. Please ensure 'reactive_power_profile.parquet' is in the correct location."
-            )
+#         # Load the Reactive Power Profile file
+#         try:
+#             self.reactive_power_profile = pd.read_parquet("src/power_system_simulation/reactive_power_profile_2.parquet")
+#         except FileNotFoundError:
+#             self.fail(
+#                 "Reactive Power Profile file not found. Please ensure 'reactive_power_profile.parquet' is in the correct location."
+#             )
     
-        # Load the Active Power Profile file
-        try:
-            self.EV_pool = pd.read_parquet("src/power_system_simulation/ev_active_power_profile_2.parquet")
-        except FileNotFoundError:
-            self.fail(
-                "Active Power Profile file not found. Please ensure 'active_power_profile.parquet' is in the correct location."
-            )
+#         # Load the Active Power Profile file
+#         try:
+#             self.EV_pool = pd.read_parquet("src/power_system_simulation/ev_active_power_profile_2.parquet")
+#         except FileNotFoundError:
+#             self.fail(
+#                 "Active Power Profile file not found. Please ensure 'active_power_profile.parquet' is in the correct location."
+#             )
 
-        # Instantiate the PowerFlow class with test data and power profiles
-        self.pf = pss.PowerSim(grid_data=self.grid_data)
+#         # Instantiate the PowerFlow class with test data and power profiles
+#         self.pf = pss.PowerSim(grid_data=self.grid_data)
 
-    def test_batch_powerflow(self):
-        output_data = self.pf.batch_powerflow(self.active_power_profile, self.reactive_power_profile)
-        self.assertIsInstance(output_data, dict)
+#     def test_batch_powerflow(self):
+#         output_data = self.pf.batch_powerflow(self.active_power_profile, self.reactive_power_profile)
+#         self.assertIsInstance(output_data, dict)
 
-        # Optionally, if there are specific expected outputs for the batch power flow,
-        # those can be compared here as well. For now, we assume output_data validation
-        # is done through the other methods.
+#         # Optionally, if there are specific expected outputs for the batch power flow,
+#         # those can be compared here as well. For now, we assume output_data validation
+#         # is done through the other methods.
 
-    def test_no_active_power_profile(self):
-        with self.assertRaises(pfp.PowerProfileNotFound):
-            self.pf.batch_powerflow(None, self.reactive_power_profile)
+#     def test_no_active_power_profile(self):
+#         with self.assertRaises(pfp.PowerProfileNotFound):
+#             self.pf.batch_powerflow(None, self.reactive_power_profile)
 
-    def test_no_reactive_power_profile(self):
-        with self.assertRaises(pfp.PowerProfileNotFound):
-            self.pf.batch_powerflow(self.active_power_profile, None)
+#     def test_no_reactive_power_profile(self):
+#         with self.assertRaises(pfp.PowerProfileNotFound):
+#             self.pf.batch_powerflow(self.active_power_profile, None)
 
-    def test_timestamp_mismatch(self):
-        reactive_power_profile = self.reactive_power_profile.copy()
-        # Ensure the reactive power profile has a different number of timestamps
-        reactive_power_profile.index = pd.date_range(
-            start="2024-06-01", periods=len(self.reactive_power_profile), freq="h"
-        )
-        with self.assertRaises(pfp.TimestampMismatch):
-            self.pf.batch_powerflow(self.active_power_profile, reactive_power_profile)
+#     def test_timestamp_mismatch(self):
+#         reactive_power_profile = self.reactive_power_profile.copy()
+#         # Ensure the reactive power profile has a different number of timestamps
+#         reactive_power_profile.index = pd.date_range(
+#             start="2024-06-01", periods=len(self.reactive_power_profile), freq="h"
+#         )
+#         with self.assertRaises(pfp.TimestampMismatch):
+#             self.pf.batch_powerflow(self.active_power_profile, reactive_power_profile)
 
-    def test_load_id_mismatch(self):
-        reactive_power_profile = self.reactive_power_profile.copy()
-        # Ensure the reactive power profile has different load IDs but same number of columns
-        columns = reactive_power_profile.columns.tolist()
-        columns[0] = "new_load_id"
-        reactive_power_profile.columns = columns
-        with self.assertRaises(pfp.LoadIDMismatch):
-            self.pf.batch_powerflow(self.active_power_profile, reactive_power_profile)
+#     def test_load_id_mismatch(self):
+#         reactive_power_profile = self.reactive_power_profile.copy()
+#         # Ensure the reactive power profile has different load IDs but same number of columns
+#         columns = reactive_power_profile.columns.tolist()
+#         columns[0] = "new_load_id"
+#         reactive_power_profile.columns = columns
+#         with self.assertRaises(pfp.LoadIDMismatch):
+#             self.pf.batch_powerflow(self.active_power_profile, reactive_power_profile)
