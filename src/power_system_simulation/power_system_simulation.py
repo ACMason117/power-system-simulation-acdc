@@ -1,13 +1,13 @@
 import warnings
 
+import graph_processing as gp
 import numpy as np
 import pandas as pd
+import power_flow_processing as pfp
 from power_grid_model import CalculationType
 from power_grid_model.validation import assert_valid_input_data
-from power_system_simulation.graph_processing import GraphProcessor
 
-import power_system_simulation.graph_processing as gp
-import power_system_simulation.power_flow_processing as pfp
+# from graph_processing import GraphProcessor
 
 
 # write exceptions here
@@ -42,6 +42,7 @@ class WrongFromNodeLVFeederError(Exception):
         Exception: _description_
     """
 
+
 # write option classes
 class TotalEnergyLoss:
     pass
@@ -52,7 +53,13 @@ class VoltageDeviation:
 
 
 class PowerSim:
-    def __init__(self, grid_data: dict, lv_feeders: list = None, active_power_profile: pd.DataFrame = None, reactive_power_profile: pd.DataFrame = None) -> None:
+    def __init__(
+        self,
+        grid_data: dict,
+        lv_feeders: list = None,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
+    ) -> None:
         """_summary_
 
         Args:
@@ -88,7 +95,7 @@ class PowerSim:
                 if i not in self.grid_data["line"]["id"]:
                     raise InvalidLVFeederIDError("LV feeder IDs are not valid line IDs")
 
-        # Check if the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
+            # Check if the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
             for i in lv_feeders:
                 index = np.where(grid_data["line"]["id"] == i)
                 if grid_data["line"][index]["from_node"] != grid_data["transformer"][0]["to_node"]:
@@ -114,7 +121,7 @@ class PowerSim:
         source_vertex_id = grid_data["source"]["node"][0]
         edge_ids = list(grid_data["line"]["id"]) + list(grid_data["transformer"]["id"])
         vertex_ids = grid_data["node"]["id"]
-        
+
         # make graph processor
         self.GraphModel = gp.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
 
@@ -129,7 +136,10 @@ class PowerSim:
         pass
 
     def optimal_tap_position(
-        self, active_power_profile = None, reactive_power_profile = None, opt_criteria=TotalEnergyLoss
+        self,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
+        opt_criteria=TotalEnergyLoss,
     ) -> int:
         # data loading
         grid_data = self.PowerSimModel.grid_data
@@ -137,7 +147,7 @@ class PowerSim:
         # check if new active power profile is given
         if active_power_profile is None:
             active_power_profile = self.active_power_profile
-        
+
         # check if new reactive power profile is given
         if reactive_power_profile is None:
             reactive_power_profile = self.reactive_power_profile
