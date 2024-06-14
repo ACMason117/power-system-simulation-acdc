@@ -81,7 +81,7 @@ class PowerSim:
                     "The LV Feeder from_node does not correspond with the transformer to_node"
                 )
 
-        # Check if the graph does not contain cycles
+        # Convert data into shape of GraphProcessor
         edge_vertex_id_pairs = list(zip(grid_data["line"]["from_node"], grid_data["line"]["to_node"])) + list(
             zip(grid_data["transformer"]["from_node"], grid_data["transformer"]["to_node"])
         )
@@ -99,20 +99,9 @@ class PowerSim:
         source_vertex_id = grid_data["source"]["node"][0]
         edge_ids = list(grid_data["line"]["id"]) + list(grid_data["transformer"]["id"])
         vertex_ids = grid_data["node"]["id"]
-        vertex_visited = []
-        vertex_parents = {}
-        adjacency_list = GraphProcessor.build_adjacency_list(self, edge_vertex_id_pairs, edge_enabled)
+        
+        
         self.graph = gp.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
-        if (
-            GraphProcessor.dfs(self, adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id)
-            == 1
-        ):
-            raise gp.GraphCycleError("Cycle found")
-
-        # 7. The graph should be fully connected
-        if len(vertex_visited) != len(vertex_ids):
-            raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
-        assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
     def example_code(self):
         print("Who reads trek een bak")
