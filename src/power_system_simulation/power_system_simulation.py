@@ -53,6 +53,20 @@ class VoltageDeviation:
 
 class PowerSim:
     def __init__(self, grid_data: dict, lv_feeders: list = None, active_power_profile: pd.DataFrame = None, reactive_power_profile: pd.DataFrame = None) -> None:
+        """_summary_
+
+        Args:
+            grid_data: _description_
+            lv_feeders: _description_. Defaults to None.
+            active_power_profile: _description_. Defaults to None.
+            reactive_power_profile: _description_. Defaults to None.
+
+        Raises:
+            NotExactlyOneSourceError: _description_
+            NotExactlyOneTransformerError: _description_
+            InvalidLVFeederIDError: _description_
+            WrongFromNodeLVFeederError: _description_
+        """
         self.PowerSimModel = pfp.PowerFlow(grid_data=grid_data)
         self.active_power_profile = active_power_profile
         self.reactive_power_profile = reactive_power_profile
@@ -69,17 +83,18 @@ class PowerSim:
             raise NotExactlyOneTransformerError("There is not exactly one transformer")
 
         # Check if the LV feeder IDs are valid line IDs
-        for i in self.lv_feeders:
-            if i not in self.grid_data["line"]["id"]:
-                raise InvalidLVFeederIDError("LV feeder IDs are not valid line IDs")
+        if lv_feeders is not None:
+            for i in self.lv_feeders:
+                if i not in self.grid_data["line"]["id"]:
+                    raise InvalidLVFeederIDError("LV feeder IDs are not valid line IDs")
 
         # Check if the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
-        for i in lv_feeders:
-            index = np.where(grid_data["line"]["id"] == i)
-            if grid_data["line"][index]["from_node"] != grid_data["transformer"][0]["to_node"]:
-                raise WrongFromNodeLVFeederError(
-                    "The LV Feeder from_node does not correspond with the transformer to_node"
-                )
+            for i in lv_feeders:
+                index = np.where(grid_data["line"]["id"] == i)
+                if grid_data["line"][index]["from_node"] != grid_data["transformer"][0]["to_node"]:
+                    raise WrongFromNodeLVFeederError(
+                        "The LV Feeder from_node does not correspond with the transformer to_node"
+                    )
 
         # Convert data into shape of GraphProcessor
         edge_vertex_id_pairs = list(zip(grid_data["line"]["from_node"], grid_data["line"]["to_node"])) + list(
@@ -100,8 +115,8 @@ class PowerSim:
         edge_ids = list(grid_data["line"]["id"]) + list(grid_data["transformer"]["id"])
         vertex_ids = grid_data["node"]["id"]
         
-        
-        self.graph = gp.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
+        # make graph processor
+        self.GraphModel = gp.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
 
     def example_code(self):
         print("Who reads trek een bak")
