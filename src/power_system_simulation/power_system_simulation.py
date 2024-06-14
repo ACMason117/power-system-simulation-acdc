@@ -57,15 +57,8 @@ class PowerSim:
         self.active_power_profile = active_power_profile
         self.reactive_power_profile = reactive_power_profile
 
-        
-
-        # assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
-
         self.grid_data = grid_data
         self.lv_feeders = lv_feeders
-        # self.active_power_profile = active_power_profile
-        # self.reactive_power_profile = reactive_power_profile
-        # self.EV_pool=EV_pool
 
         # Check if there is exactly one source
         if len(grid_data["source"]) != 1:
