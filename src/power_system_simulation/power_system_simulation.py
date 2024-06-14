@@ -191,8 +191,18 @@ class PowerSim:
         pass
 
     def optimal_tap_position(
-        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, opt_criteria=TotalEnergyLoss
+        self,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
+        opt_criteria=TotalEnergyLoss,
     ) -> int:
+
+        if active_power_profile is None:
+            active_power_profile = self.active_power_profile
+
+        if reactive_power_profile is None:
+            reactive_power_profile = self.reactive_power_profile
+
         grid_data = self.PowerSimModel.grid_data
 
         update_tap = range(grid_data["transformer"]["tap_max"][0], grid_data["transformer"]["tap_min"][0] + 1)
@@ -201,7 +211,6 @@ class PowerSim:
         voltage_deviation = {}
         voltage_table = {}
 
-        # may god help us with this function
         # output_data = {}
 
         for i in update_tap:
