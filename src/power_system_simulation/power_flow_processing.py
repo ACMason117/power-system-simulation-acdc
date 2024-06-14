@@ -5,84 +5,204 @@ In this file the processing of the power system should be done. Power system can
 
 import json
 import pprint
-import time
-from typing import Dict
+import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
+
+# import power_grid_model as pgm
+import pyarrow as pa
+import pyarrow.parquet as pq
+import scipy as sp
+
+with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
+    # suppress warning about pyarrow as future required dependency
+    from pandas import DataFrame
+
 from power_grid_model import CalculationMethod, CalculationType, PowerGridModel, initialize_array
 from power_grid_model.utils import json_deserialize, json_serialize
 from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
+from pyarrow import table
+
+
+class PowerProfileNotFound(Exception):
+    """Raises error if power profile is not found"""
+
+    pass
+
+
+class TimestampMismatch(Exception):
+    """ " Raises error if timestamps of power profiles do no not match"""
+
+    pass
+
+
+class LoadIDMismatch(Exception):
+    """ " Raises error if load IDs of power profiles do no not match"""
+
+    pass
 
 
 class PowerFlow:
-    """
-    General documentation of this class.
-    You need to describe the purpose of this class and the functions in it.
-    We are initializing the data here.
-    """
 
-    def __init__(self, data=None, power_profile=None, reactive_power_profile=None):
-        # Load data upon instantiation
-        self.data = data
-        self.power_profile = power_profile
-        self.reactive_power_profile = reactive_power_profile
+    def __init__(self, grid_data: dict) -> None:
+        """Load grid_data in class 'PowerFlow' upon instantiation
 
-    def process_data(self):
+        Args:
+            grid_data: Power grid input data. Class dict.
+            active_power_profile: Active power profile time data. Class pyarrow.table.
+            reactive_power_profile: Reactive power profile time data. Class pyarrow.table.
         """
-        Do the processing of the data here.
+
+        assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
+
+        self.grid_data = grid_data
+
+        self.model = PowerGridModel(self.grid_data)
+
+    def batch_powerflow(
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0
+    ) -> dict:
         """
-        pprint.pprint(json.loads(self.data))
-        dataset = json_deserialize(self.data)
-        print("components:", dataset.keys())
-        print(DataFrame(dataset["node"]))
+        Create a batch update dataset and calculate power flow.
 
-        model = PowerGridModel(dataset)
-        output = model.calculate_power_flow()
-        print(DataFrame(output["node"]))
+        Args:
+            active_power_profile: DataFrame with columns ['Timestamp', '8', '9', '10', ...]
+            reactive_power_profile: DataFrame with columns ['Timestamp', '8', '9', '10', ...]
 
-        serialized_output = json_serialize(output)
-        print(serialized_output)
+        Returns:
+            pd.DataFrame: Power flow solution data.
+        """
+        # check if any power profile is provided
+        if active_power_profile is None:
+            raise PowerProfileNotFound("No active power profile provided.")
 
-        if self.power_profile is not None:
-            print("Active Power Profile Data:")
-            print(self.power_profile)
-        else:
-            print("No active power profile data provided.")
+        if reactive_power_profile is None:
+            raise PowerProfileNotFound("No reactive power profile provided.")
 
-        if self.reactive_power_profile is not None:
-            print("Reactive Power Profile Data:")
-            print(self.reactive_power_profile)
-        else:
-            print("No Reactive power profile data provided.")
+        # check if timestamps are equal in value and lengths
+        if active_power_profile.index.to_list() != reactive_power_profile.index.to_list():
+            raise TimestampMismatch("Timestamps of active and reactive power profiles do not match.")
 
-    def aggregate_power_flow_result_table1(data):
-        result = []
-        model = PowerGridModel(input_data=data)
-        result1 = model.calculate_power_flow(calculation_method=CalculationMethod.linear)
-        max_voltage = max(result1["node"]["u_pu"])
-        min_voltage = min(result1["node"]["u_pu"])
+        if active_power_profile.columns.to_list() != reactive_power_profile.columns.to_list():
+            raise LoadIDMismatch("Load IDs in given power profiles do not match")
 
-        for i in range(len(result1["node"]["u_pu"])):
-            if result1["node"]["u_pu"][i] == max_voltage:
-                max_node = result1["node"]["id"][i]
-            if result1["node"]["u_pu"][i] == min_voltage:
-                min_node = result1["node"]["id"][i]
-
-        result.append(
-            {
-                "Timestamp": ["Node"],  # I am not sure about this
-                "Max p.u. voltage": max_voltage,
-                "Max voltage node id": max_node,
-                "Min p.u. voltage": min_voltage,
-                "Min Voltage node id": min_node,
-            }
+        load_profile = initialize_array(
+            "update",
+            "sym_load",
+            (len(active_power_profile.index.to_list()), len(active_power_profile.columns.to_list())),
         )
 
-        # Convert the list of dictionaries to a Pandas Dataframe
-        result_df = pd.DataFrame(result)
-        # Set the timestamp column as the index
-        result_df.set_index("Timestamp", inplace=True)
-        return result_df
+        load_profile["id"] = active_power_profile.columns.tolist()
+        load_profile["p_specified"] = active_power_profile.values.tolist()
+        load_profile["q_specified"] = reactive_power_profile.values.tolist()
+
+        # Construct the update data
+        if tap_value != 0:
+            tap_profile = initialize_array("update", "transformer", (len(active_power_profile.values.tolist()), 1))
+            tap_profile["id"] = self.grid_data["transformer"]["id"]
+            tap_profile["tap_pos"] = tap_value
+
+            update_data = {"sym_load": load_profile, "transformer": tap_profile}
+
+        else:
+            update_data = {"sym_load": load_profile}
+
+        # Validate batch data
+        assert_valid_batch_data(
+            input_data=self.grid_data, update_data=update_data, calculation_type=CalculationType.power_flow
+        )
+
+        # Run Newton-Raphson power flow
+        output_data = self.model.calculate_power_flow(
+            update_data=update_data, calculation_method=CalculationMethod.newton_raphson
+        )
+
+        return output_data
+
+    def aggregate_voltage_table(
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Aggregate power flow results into a table with voltage information.
+
+        Args:
+            output_data (pd.DataFrame): Output data from power flow calculation.
+
+        Returns:
+            pd.DataFrame: Table with voltage information.
+        """
+
+        output_data = self.batch_powerflow(
+            active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
+        )
+
+        voltage_table = pd.DataFrame()
+
+        voltage_table["Timestamp"] = active_power_profile.index.tolist()
+        voltage_table["Max_Voltage"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).max(axis=1).tolist()
+        voltage_table["Max_Voltage_Node"] = output_data["node"][
+            :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmax(axis=1).tolist()
+        ]["id"][0, :]
+        voltage_table["Min_Voltage"] = pd.DataFrame(output_data["node"]["u_pu"][:, :]).min(axis=1).tolist()
+        voltage_table["Min_Voltage_Node"] = output_data["node"][
+            :, pd.DataFrame(output_data["node"]["u_pu"][:, :]).idxmin(axis=1).tolist()
+        ]["id"][0, :]
+
+        voltage_table.set_index("Timestamp", inplace=True)
+
+        return voltage_table
+
+    def aggregate_loading_table(
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0
+    ) -> pd.DataFrame:
+
+        output_data = self.batch_powerflow(
+            active_power_profile=active_power_profile,
+            reactive_power_profile=reactive_power_profile,
+            tap_value=tap_value,
+        )
+
+        line_data = output_data["line"]
+
+        loading_table = pd.DataFrame()
+
+        line_ids = line_data["id"][0, :]
+
+        # Extract power data
+        p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
+        p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
+
+        # Extract power data
+        p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
+        p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
+
+        # Calculate power loss
+        p_loss = (p_from + p_to) * 1e-3
+
+        # Calculate energy loss
+        e_loss = sp.integrate.trapezoid(p_loss, dx=1.0, axis=0)
+
+        # compute maximum and minimum loading
+        loading = pd.DataFrame(line_data["loading"][:, :], columns=line_ids)
+
+        max_loading = loading.max()
+        min_loading = loading.min()
+
+        max_loading_id = loading.idxmax()
+        min_loading_id = loading.idxmin()
+
+        max_loading_time = active_power_profile.index[max_loading_id]
+        min_loading_time = active_power_profile.index[min_loading_id]
+
+        # Construct loading table
+        loading_table["Line_ID"] = line_ids
+        loading_table["Total_Loss"] = e_loss
+        loading_table["Max_Loading"] = max_loading.values
+        loading_table["Max_Loading_Timestamp"] = max_loading_time.values
+        loading_table["Min_Loading"] = min_loading.values
+        loading_table["Min_Loading_Timestamp"] = min_loading_time.values
+
+        loading_table.set_index("Line_ID", inplace=True)
+
+        return loading_table
