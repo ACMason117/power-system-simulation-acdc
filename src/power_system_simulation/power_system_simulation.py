@@ -6,7 +6,7 @@ try:
     import power_flow_processing as pfp
 except:
     import power_system_simulation.graph_processing as gp
-    import power_system_simulation.power_flow_processing as pfp 
+    import power_system_simulation.power_flow_processing as pfp
 
 
 # write exceptions here

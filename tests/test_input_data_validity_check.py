@@ -3,8 +3,6 @@ import unittest
 import pandas as pd
 import pytest  # Import pytest
 from power_grid_model import LoadGenType, PowerGridModel, initialize_array
-# import power_system_simulation.graph_processing as gp
-# import power_system_simulation.power_flow_processing as pfp
 
 from power_system_simulation.graph_processing import GraphCycleError, GraphNotFullyConnectedError
 
@@ -17,6 +15,11 @@ from power_system_simulation.power_system_simulation import (
     PowerSim,
     WrongFromNodeLVFeederError,
 )
+
+# import power_system_simulation.graph_processing as gp
+# import power_system_simulation.power_flow_processing as pfp
+
+
 
 
 def test_InvalidLVFeederIDError():
