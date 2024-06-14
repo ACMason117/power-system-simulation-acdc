@@ -4,7 +4,7 @@ import power_flow_processing as pfp
 
 # write exceptions here
 
-
+# write option classes
 class TotalEnergyLoss:
     pass
 
@@ -14,8 +14,10 @@ class VoltageDeviation:
 
 
 class PowerSim:
-    def __init__(self, grid_data: dict) -> None:
+    def __init__(self, grid_data: dict, active_power_profile = None, reactive_power_profile = None ) -> None:
         self.PowerSimModel = pfp.PowerFlow(grid_data=grid_data)
+        self.active_power_profile = active_power_profile
+        self.reactive_power_profile = reactive_power_profile
 
     def example_code(self):
         print("Who reads trek een bak")
@@ -28,9 +30,18 @@ class PowerSim:
         pass
 
     def optimal_tap_position(
-        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, opt_criteria=TotalEnergyLoss
+        self, active_power_profile = None, reactive_power_profile = None, opt_criteria=TotalEnergyLoss
     ) -> int:
+        # data loading
         grid_data = self.PowerSimModel.grid_data
+
+        # check if new active power profile is given
+        if active_power_profile is None:
+            active_power_profile = self.active_power_profile
+        
+        # check if new reactive power profile is given
+        if reactive_power_profile is None:
+            reactive_power_profile = self.reactive_power_profile
 
         update_tap = range(grid_data["transformer"]["tap_max"][0], grid_data["transformer"]["tap_min"][0] + 1)
 
