@@ -116,11 +116,11 @@ class PowerSim:
             raise gp.GraphCycleError("Cycle found")
 
         #7. The graph should be fully connected
-        #if len(vertex_visited) != len(vertex_ids):
-        #   raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
-        #assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
+        if len(vertex_visited) != len(vertex_ids):
+           raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
+        assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
-        print(self.graph.find_downstream_vertices(1))
+        #print(self.graph.find_downstream_vertices(1))
 
         # # check if any power profile is provided
         # if active_power_profile is None:
