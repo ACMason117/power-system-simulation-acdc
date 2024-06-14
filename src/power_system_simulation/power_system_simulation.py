@@ -51,7 +51,7 @@ class VoltageDeviation:
 
 
 class PowerSim:
-    def __init__(self, grid_data: dict, lv_feeders: list = None, active_power_profile: pd.DataFrame=None) -> None:
+    def __init__(self, grid_data: dict, lv_feeders: list = None, active_power_profile: pd.DataFrame=None, reactive_power_profile: pd.DataFrame=None) -> None:
         self.PowerSimModel = pfp.PowerFlow(grid_data=grid_data)
 
 
@@ -59,7 +59,7 @@ class PowerSim:
         self.grid_data = grid_data
         self.lv_feeders = lv_feeders
         self.active_power_profile = active_power_profile
-        # self.reactive_power_profile = reactive_power_profile
+        self.reactive_power_profile = reactive_power_profile
         # self.EV_pool=EV_pool
 
         # Check if there is exactly one source
@@ -117,8 +117,15 @@ class PowerSim:
         pass
 
     def optimal_tap_position(
-        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, opt_criteria=TotalEnergyLoss
+        self, active_power_profile: pd.DataFrame = None, reactive_power_profile: pd.DataFrame = None, opt_criteria=TotalEnergyLoss
     ) -> int:
+        
+        if active_power_profile is None:
+            active_power_profile = self.active_power_profile
+        
+        if reactive_power_profile is None:
+            reactive_power_profile = self.reactive_power_profile
+
         grid_data = self.PowerSimModel.grid_data
 
         update_tap = range(grid_data["transformer"]["tap_max"][0], grid_data["transformer"]["tap_min"][0] + 1)
