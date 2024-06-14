@@ -20,8 +20,6 @@ from power_system_simulation.power_system_simulation import (
 # import power_system_simulation.power_flow_processing as pfp
 
 
-
-
 def test_InvalidLVFeederIDError():
 
     # node
