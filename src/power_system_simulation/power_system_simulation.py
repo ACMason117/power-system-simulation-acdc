@@ -1,8 +1,8 @@
-import graph_processing as gp
 import numpy as np
 import pandas as pd
-import power_flow_processing as pfp
-import power_system_simulation as pss
+
+import power_system_simulation.graph_processing as gp
+import power_system_simulation.power_flow_processing as pfp
 
 # write exceptions here
 
