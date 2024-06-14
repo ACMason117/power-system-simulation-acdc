@@ -51,17 +51,19 @@ class VoltageDeviation:
 
 
 class PowerSim:
-    def __init__(self, grid_data: dict, lv_feeders: list = None) -> None:
+    def __init__(
+        self,
+        grid_data: dict,
+        lv_feeders: list = None,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
+    ) -> None:
         self.PowerSimModel = pfp.PowerFlow(grid_data=grid_data)
-
-        from power_system_simulation.graph_processing import GraphProcessor
-
-        # assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
         self.grid_data = grid_data
         self.lv_feeders = lv_feeders
-        # self.active_power_profile = active_power_profile
-        # self.reactive_power_profile = reactive_power_profile
+        self.active_power_profile = active_power_profile
+        self.reactive_power_profile = reactive_power_profile
         # self.EV_pool=EV_pool
 
         # Check if there is exactly one source
@@ -73,17 +75,18 @@ class PowerSim:
             raise NotExactlyOneTransformerError("There is not exactly one transformer")
 
         # Check if the LV feeder IDs are valid line IDs
-        for i in self.lv_feeders:
-            if i not in self.grid_data["line"]["id"]:
-                raise InvalidLVFeederIDError("LV feeder IDs are not valid line IDs")
+        if self.lv_feeders is not None:
+            for i in self.lv_feeders:
+                if i not in self.grid_data["line"]["id"]:
+                    raise InvalidLVFeederIDError("LV feeder IDs are not valid line IDs")
 
-        # Check if the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
-        for i in lv_feeders:
-            index = np.where(grid_data["line"]["id"] == i)
-            if grid_data["line"][index]["from_node"] != grid_data["transformer"][0]["to_node"]:
-                raise WrongFromNodeLVFeederError(
-                    "The LV Feeder from_node does not correspond with the transformer to_node"
-                )
+            # Check if the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
+            for i in lv_feeders:
+                index = np.where(grid_data["line"]["id"] == i)
+                if grid_data["line"][index]["from_node"] != grid_data["transformer"][0]["to_node"]:
+                    raise WrongFromNodeLVFeederError(
+                        "The LV Feeder from_node does not correspond with the transformer to_node"
+                    )
 
         # Check if the graph does not contain cycles
         edge_vertex_id_pairs = list(zip(grid_data["line"]["from_node"], grid_data["line"]["to_node"])) + list(
@@ -103,20 +106,8 @@ class PowerSim:
         source_vertex_id = grid_data["source"]["node"][0]
         edge_ids = list(grid_data["line"]["id"]) + list(grid_data["transformer"]["id"])
         vertex_ids = grid_data["node"]["id"]
-        vertex_visited = []
-        vertex_parents = {}
-        adjacency_list = GraphProcessor.build_adjacency_list(self, edge_vertex_id_pairs, edge_enabled)
-        self.graph = gp.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
-        if (
-            GraphProcessor.dfs(self, adjacency_list, vertex_visited, float("Nan"), vertex_parents, source_vertex_id)
-            == 1
-        ):
-            raise gp.GraphCycleError("Cycle found")
 
-        # 7. The graph should be fully connected
-        if len(vertex_visited) != len(vertex_ids):
-            raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
-        assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
+        self.graph = gp.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
 
     def example_code(self):
         print("Who reads trek een bak")
@@ -129,8 +120,18 @@ class PowerSim:
         pass
 
     def optimal_tap_position(
-        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, opt_criteria=TotalEnergyLoss
+        self,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
+        opt_criteria=TotalEnergyLoss,
     ) -> int:
+
+        if active_power_profile is None:
+            active_power_profile = self.active_power_profile
+
+        if reactive_power_profile is None:
+            reactive_power_profile = self.reactive_power_profile
+
         grid_data = self.PowerSimModel.grid_data
 
         update_tap = range(grid_data["transformer"]["tap_max"][0], grid_data["transformer"]["tap_min"][0] + 1)
