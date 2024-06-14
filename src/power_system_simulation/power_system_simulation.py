@@ -103,6 +103,56 @@ class PowerSim:
         source_vertex_id = grid_data["source"]["node"][0]
         edge_ids = list(grid_data["line"]["id"]) + list(grid_data["transformer"]["id"])
         vertex_ids = grid_data["node"]["id"]
+
+        # Find alternative edges
+
+        graph = gp.GraphProcessor(
+            vertex_ids=vertex_ids,
+            edge_ids=edge_ids,
+            edge_vertex_id_pairs=edge_vertex_id_pairs,
+            edge_enabled=edge_enabled,
+            source_vertex_id=source_vertex_id,
+        )
+
+        alt_edges = graph.find_alternative_edges(disabled_edge_id)
+
+        # Run Powerflow table and aggregate table
+
+        results = []
+
+        line_data = grid_data["line"]
+
+        for alt_line_id in alt_edges:
+            alt_line_index = None
+            for i in range(len(line_data["id"])):
+                if line_data["id"][i] == alt_line_id:
+                    alt_line_index = i
+                    break
+            if alt_line_index is not None:
+                line_data["to_status"][alt_line_index] = 1
+                loading_table = self.PowerSimModel.aggregate_loading_table(
+                    active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
+                )
+
+                max_loading = loading_table["Max_Loading"].max()
+                max_loading_id = loading_table["Max_Loading"].idxmax()
+                max_loading_timestamp = loading_table.loc[max_loading_id, "Max_Loading_Timestamp"]
+
+                results.append(
+                    {
+                        "Alternative_Line_ID": alt_line_id,
+                        "Max_Loading": max_loading,
+                        "Max_Loading_ID": max_loading_id,
+                        "Max_Loading_Timestamp": max_loading_timestamp,
+                    }
+                )
+        results_df = pd.DataFrame(results)
+        if results_df.empty:
+            results_df = pd.DataFrame(
+                columns=["Alternative_Line_ID", "Max_Loading", "Max_Loading_ID", "Max_Loading_Timestamp"]
+            )
+
+        return results_df
         vertex_visited = []
         vertex_parents = {}
         adjacency_list = GraphProcessor.build_adjacency_list(self, edge_vertex_id_pairs, edge_enabled)
