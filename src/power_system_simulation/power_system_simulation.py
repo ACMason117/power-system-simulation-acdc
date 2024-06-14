@@ -86,22 +86,9 @@ class PowerSim:
                 sym_load_nodes = set(grid_data["sym_load"]["node"])
                 common_nodes = sym_load_nodes.intersection(downstream_vertices)
                 print(common_nodes)  # all the nodes in a downstream vertex that have a sym load
-                """
-                # ---- asigment of profiles
-                ev_assignment_counter = 0
-                for node in common_nodes:
-                    if ev_assignment_counter >= evs_per_feeder:
-                        break
-            for idx, row in ev_active_power_profile.iterrows():
-                        if idx not in assigned_profiles:
-                            # Assign EV profile to active_power_profile at the corresponding node
-                            active_power_profile.loc[active_power_profile['node'] == node, 'ev_profile'] = idx
-                            assigned_profiles.add(idx)
-                            ev_assignment_counter += 1
-                            break
-                        if ev_assignment_counter >= evs_per_feeder:
-                            break  # Stop further processing of lines once we've assigned enough EV profiles
-                """
+                
+        combined_profile = active_power_profile
+        combined_profile[symload_id] = active_power_profile[symload_id].values + ev_active_power_profile[ev_id].values  
 
     def optimal_tap_position(
         self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, opt_criteria=TotalEnergyLoss
