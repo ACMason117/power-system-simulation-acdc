@@ -87,7 +87,7 @@ class TestPowerFlow(unittest.TestCase):
         reactive_power_profile = self.reactive_power_profile.copy()
         # Ensure the reactive power profile has a different number of timestamps
         reactive_power_profile.index = pd.date_range(
-            start="2024-06-01", periods=len(self.reactive_power_profile), freq="H"
+            start="2024-06-01", periods=len(self.reactive_power_profile), freq="h"
         )
         with self.assertRaises(pfp.TimestampMismatch):
             self.pf.batch_powerflow(self.active_power_profile, reactive_power_profile)
