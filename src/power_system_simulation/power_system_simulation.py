@@ -88,7 +88,7 @@ class PowerSim:
                 print(common_nodes)  # all the nodes in a downstream vertex that have a sym load
                 
         combined_profile = active_power_profile
-        combined_profile[symload_id] = active_power_profile[symload_id].values + ev_active_power_profile[ev_id].values  
+        # combined_profile[symload_id] = active_power_profile[symload_id].values + ev_active_power_profile[ev_id].values  
 
     def optimal_tap_position(
         self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, opt_criteria=TotalEnergyLoss
