@@ -60,7 +60,9 @@ class PowerFlow:
 
         self.model = PowerGridModel(self.grid_data)
 
-    def batch_powerflow(self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame) -> dict:
+    def batch_powerflow(
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0
+    ) -> dict:
         """
         Create a batch update dataset and calculate power flow.
 
@@ -96,7 +98,15 @@ class PowerFlow:
         load_profile["q_specified"] = reactive_power_profile.values.tolist()
 
         # Construct the update data
-        update_data = {"sym_load": load_profile}
+        if tap_value != 0:
+            tap_profile = initialize_array("update", "transformer", (len(active_power_profile.values.tolist()), 1))
+            tap_profile["id"] = self.grid_data["transformer"]["id"]
+            tap_profile["tap_pos"] = tap_value
+
+            update_data = {"sym_load": load_profile, "transformer": tap_profile}
+
+        else:
+            update_data = {"sym_load": load_profile}
 
         # Validate batch data
         assert_valid_batch_data(
@@ -144,20 +154,13 @@ class PowerFlow:
         return voltage_table
 
     def aggregate_loading_table(
-        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame
+        self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0
     ) -> pd.DataFrame:
-        """
-        Aggregate power flow results into a table with loading information.
-
-        Args:
-            output_data (dict): Output data from power flow calculation.
-
-        Returns:
-            pd.DataFrame: Table with loading information.
-        """
 
         output_data = self.batch_powerflow(
-            active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
+            active_power_profile=active_power_profile,
+            reactive_power_profile=reactive_power_profile,
+            tap_value=tap_value,
         )
 
         line_data = output_data["line"]
