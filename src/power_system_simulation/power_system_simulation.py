@@ -106,7 +106,7 @@ class PowerSim:
 
         # 7. The graph should be fully connected
         if len(vertex_visited) != len(vertex_ids):
-           raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
+            raise gp.GraphNotFullyConnectedError("Graph not fully connected. Cannot reach all vertices.")
         assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
 
     def example_code(self):

@@ -414,6 +414,7 @@ def test_CycleError():
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "Cycle found"
 
+
 def test_GraphNotFullyConnectedError():
 
     # node
