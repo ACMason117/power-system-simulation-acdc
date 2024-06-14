@@ -51,10 +51,14 @@ class VoltageDeviation:
 
 
 class PowerSim:
-    def __init__(self, grid_data: dict, lv_feeders: list = None, active_power_profile: pd.DataFrame=None, reactive_power_profile: pd.DataFrame=None) -> None:
+    def __init__(
+        self,
+        grid_data: dict,
+        lv_feeders: list = None,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
+    ) -> None:
         self.PowerSimModel = pfp.PowerFlow(grid_data=grid_data)
-
-
 
         self.grid_data = grid_data
         self.lv_feeders = lv_feeders
@@ -102,8 +106,7 @@ class PowerSim:
         source_vertex_id = grid_data["source"]["node"][0]
         edge_ids = list(grid_data["line"]["id"]) + list(grid_data["transformer"]["id"])
         vertex_ids = grid_data["node"]["id"]
-        
-        
+
         self.graph = gp.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
 
     def example_code(self):
@@ -117,12 +120,15 @@ class PowerSim:
         pass
 
     def optimal_tap_position(
-        self, active_power_profile: pd.DataFrame = None, reactive_power_profile: pd.DataFrame = None, opt_criteria=TotalEnergyLoss
+        self,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
+        opt_criteria=TotalEnergyLoss,
     ) -> int:
-        
+
         if active_power_profile is None:
             active_power_profile = self.active_power_profile
-        
+
         if reactive_power_profile is None:
             reactive_power_profile = self.reactive_power_profile
 
