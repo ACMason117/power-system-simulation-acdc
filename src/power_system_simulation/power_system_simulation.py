@@ -2,7 +2,6 @@ import graph_processing as gp
 import numpy as np
 import pandas as pd
 import power_flow_processing as pfp
-
 import power_system_simulation as pss
 
 # write exceptions here
@@ -19,7 +18,6 @@ class PowerSim:
         reactive_power_profile: pd.DataFrame,
         disabled_edge_id: int,
     ) -> pd.DataFrame:
-        test1 = pss.PowerSim(grid_data)
 
         # Rewriting the grid dataframe to assignment 1 list:
 
@@ -43,7 +41,7 @@ class PowerSim:
 
         # Find alternative edges
 
-        test2 = gp.GraphProcessor(
+        graph = gp.GraphProcessor(
             vertex_ids=vertex_ids,
             edge_ids=edge_ids,
             edge_vertex_id_pairs=edge_vertex_id_pairs,
@@ -51,7 +49,7 @@ class PowerSim:
             source_vertex_id=source_vertex_id,
         )
 
-        alt_edges = test2.find_alternative_edges(disabled_edge_id)
+        alt_edges = graph.find_alternative_edges(disabled_edge_id)
 
         # Run Powerflow table and aggregate table
 
@@ -67,7 +65,7 @@ class PowerSim:
                     break
             if alt_line_index is not None:
                 line_data["to_status"][alt_line_index] = 1
-                loading_table = test1.PowerSimModel.aggregate_loading_table(
+                loading_table = self.PowerSimModel.aggregate_loading_table(
                     active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
                 )
 
