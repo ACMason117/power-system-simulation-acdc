@@ -3,16 +3,14 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-import scipy as sp
 import pytest
+import scipy as sp
+from power_grid_model import LoadGenType, PowerGridModel, initialize_array
 from power_grid_model.utils import json_deserialize_from_file
 
 import power_system_simulation.graph_processing as gp
 import power_system_simulation.power_flow_processing as pfp
 import power_system_simulation.power_system_simulation as pss
-
-from power_grid_model import LoadGenType, PowerGridModel, initialize_array
-
 from power_system_simulation.graph_processing import GraphCycleError, GraphNotFullyConnectedError
 
 # from power_system_simulation.input_data_validity_check import InvalidLVFeederIDError, validity_check, NotExactlyOneSourceError, NotExactlyOneTransformerError, WrongFromNodeLVFeederError  # Import power_system_simpulation.graphy_processing
@@ -22,11 +20,10 @@ from power_system_simulation.power_system_simulation import (
     NotExactlyOneSourceError,
     NotExactlyOneTransformerError,
     PowerSim,
+    TotalEnergyLoss,
+    VoltageDeviation,
     WrongFromNodeLVFeederError,
 )
-
-from power_system_simulation.power_system_simulation import TotalEnergyLoss
-from power_system_simulation.power_system_simulation import VoltageDeviation
 
 
 class TestPowerSim(unittest.TestCase):
@@ -36,9 +33,7 @@ class TestPowerSim(unittest.TestCase):
 
         # Load the Active Power Profile file
         try:
-            self.active_power_profile = pd.read_parquet(
-                "src/power_system_simulation/active_power_profile_2.parquet"
-            )
+            self.active_power_profile = pd.read_parquet("src/power_system_simulation/active_power_profile_2.parquet")
         except FileNotFoundError:
             self.fail(
                 "Active Power Profile file not found. Please ensure 'active_power_profile.parquet' is in the correct location."
@@ -105,7 +100,7 @@ class TestPowerSim(unittest.TestCase):
             penetration_level=penetration_level,
             active_power_profile=self.active_power_profile,
             reactive_power_profile=self.reactive_power_profile,
-            ev_active_power_profile=self.ev_active_power_profile
+            ev_active_power_profile=self.ev_active_power_profile,
         )
 
         # Assertions to verify correct functionality
@@ -121,7 +116,7 @@ class TestPowerSim(unittest.TestCase):
         optimal_tap = self.psm.optimal_tap_position(
             active_power_profile=self.active_power_profile,
             reactive_power_profile=self.reactive_power_profile,
-            opt_criteria=TotalEnergyLoss
+            opt_criteria=TotalEnergyLoss,
         )
 
         # Assertions to verify correct functionality for energy loss criteria
@@ -131,12 +126,11 @@ class TestPowerSim(unittest.TestCase):
         optimal_tap = self.psm.optimal_tap_position(
             active_power_profile=self.active_power_profile,
             reactive_power_profile=self.reactive_power_profile,
-            opt_criteria=VoltageDeviation
+            opt_criteria=VoltageDeviation,
         )
 
         # Assertions to verify correct functionality for voltage deviation criteria
         self.assertIsInstance(optimal_tap, int, "Optimal tap position should be an integer")
-
 
     def test_InvalidLVFeederIDError(self):
 
@@ -601,6 +595,7 @@ def test_GraphNotFullyConnectedError():
     with pytest.raises(GraphNotFullyConnectedError) as excinfo:
         PowerSim(grid_data=input_data, lv_feeders=lv_feeders)
     assert str(excinfo.value) == "Graph not fully connected. Cannot reach all vertices."
+
 
 if __name__ == "__main__":
     unittest.main()
