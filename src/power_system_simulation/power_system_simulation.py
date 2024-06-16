@@ -61,15 +61,39 @@ class NotEnoughEVprofilesForHouseAssignment(Exception):
     """
 
 
+class InvalidLineIDError(Exception):
+    """Raises error if the given Line ID to be disabled in N-1 calculation is invalid or does not exist
+
+    Args:
+        Exception: _description_
+    """
+
+
+class NotConnectedLineError(Exception):
+    """Raises error if the given Line ID is not connected at both sides in the base case
+
+    Args:
+        Exception: _description_
+    """
+
+
 class TotalEnergyLoss:
+    """ Criterium for optimization: Minimizes total energy loss"""
     pass
 
 
 class VoltageDeviation:
+    """ Criterium for optimization: Minimizes voltage deviation"""
     pass
 
 
 class PowerSim:
+    """
+    In this class are the functionalities of assignment 3, 
+    including the initialization of the grid and the functions for EV penetration, 
+    optimal tap position and N-1 calculations
+    """
+
     def __init__(
         self,
         grid_data: dict,
@@ -77,7 +101,32 @@ class PowerSim:
         active_power_profile: pd.DataFrame = None,
         reactive_power_profile: pd.DataFrame = None,
     ) -> None:
-        self.PowerSimModel = pfp.PowerFlow(grid_data=grid_data)
+        """
+        Initialize the Power System Simulation model with grid data and optional profiles.
+
+        Args:
+            grid_data (dict): Dictionary containing information about the power grid.
+            lv_feeders (list, optional): List of IDs representing low voltage (LV) feeders in the grid.
+            active_power_profile (pd.DataFrame, optional): 
+                DataFrame containing active power profiles for houses/nodes
+            reactive_power_profile (pd.DataFrame, optional): 
+                DataFrame containing reactive power profiles for houses/nodes
+
+        Raises:
+            NotExactlyOneSourceError: Raised if the grid data does not contain exactly one source.
+            NotExactlyOneTransformerError: Raised if the grid data does not contain exactly one transformer.
+            InvalidLVFeederIDError: Raised if any LV feeder ID in 
+                `lv_feeders` is not a valid line ID in `grid_data`.
+            WrongFromNodeLVFeederError: Raised if the from_node of any 
+                LV feeder line does not correspond to the to_node of the transformer in the grid.
+            CycleInGraphError: Raised if the power grid representation (graph) contains cycles.
+
+        Notes:
+            - Initializes a `PowerFlow` model (`power_sim_model`) using `grid_data`.
+            - Checks the validity and consistency of the provided grid data and LV feeder configuration.
+            - Sets up a `GraphProcessor` (`graph`) to handle graph operations on the power grid.
+        """
+        self.power_sim_model = pfp.PowerFlow(grid_data=grid_data)
 
         self.grid_data = grid_data
         self.lv_feeders = lv_feeders
@@ -135,6 +184,42 @@ class PowerSim:
         reactive_power_profile: pd.DataFrame,
         disabled_edge_id: int,
     ) -> pd.DataFrame:
+        """
+        Determines an alternative grid topology when a given line is out of service. 
+        The user will provide the Line ID which is going to be out of service.
+        The function returns a table which summarizes the results, 
+        each row in the table is one alternative scenario. The table contains the following columns:
+        - The alternative Line ID to be connected
+        - The maximum loading among of lines and timestamps
+        -The Line ID of this maximum
+        - The timestamp of this maximum
+
+        Args:
+            grid_data (dict):
+            active_power_profile (pd.DataFrame): Active power profile for the houses/nodes
+            reactive_power_profile (pd.DataFrame): Reactive power profile for houses/nodes
+            disabled_edge_id (int): to be disabled line ID
+
+        Returns:
+            pd.DataFrame: table which summarizes the results, each row in the table is one alternative scenario.
+
+        Raises:
+            InvalidLineIDError: Raised if the provided disabled_edge_id is not a valid line ID.
+            NotConnectedLineError: Raised if the disabled_edge_id is not
+                connected at both ends (from_status and to_status should be 1).
+        """
+
+        # Check if disabled_edge_id is a valid line ID
+        if disabled_edge_id not in grid_data["line"]["id"]:
+            raise InvalidLineIDError(f"Line ID {disabled_edge_id} is not a valid line ID.")
+
+        # Check if disabled_edge_id is connected at both ends in the base case
+        line_data = grid_data["line"]
+        line_index = np.where(line_data["id"] == disabled_edge_id)[0][0]  # Find the index of the disabled edge
+        if line_data["from_status"][line_index] != 1 or line_data["to_status"][line_index] != 1:
+            raise NotConnectedLineError(
+                f"Line ID {disabled_edge_id} is not connected at both ends in the base grid configuration."
+            )
 
         # Rewriting the grid dataframe to assignment 1 list:
 
@@ -172,8 +257,6 @@ class PowerSim:
 
         results = []
 
-        line_data = grid_data["line"]
-
         for alt_line_id in alt_edges:
             alt_line_index = None
             for i in range(len(line_data["id"])):
@@ -182,7 +265,7 @@ class PowerSim:
                     break
             if alt_line_index is not None:
                 line_data["to_status"][alt_line_index] = 1
-                loading_table = self.PowerSimModel.aggregate_loading_table(
+                loading_table = self.power_sim_model.aggregate_loading_table(
                     active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
                 )
 
@@ -271,8 +354,7 @@ class PowerSim:
                 common_nodes_list = sorted(common_nodes)
 
                 # Check if the number of EVs per feeder is greater than the available houses
-                if len(common_nodes_list) < evs_per_feeder:
-                    evs_per_feeder = len(common_nodes_list)
+                evs_per_feeder = min(evs_per_feeder, len(common_nodes_list))
 
                 selected_houses = random.sample(common_nodes_list, evs_per_feeder)
 
@@ -287,8 +369,8 @@ class PowerSim:
 
         # Run time-series power flow after assigning EV profiles
         self.grid_data = grid_data  # Update grid data with new sym_load values if needed
-        voltage_table = self.PowerSimModel.aggregate_voltage_table(active_power_profile, reactive_power_profile)
-        loading_table = self.PowerSimModel.aggregate_loading_table(active_power_profile, reactive_power_profile)
+        voltage_table = self.power_sim_model.aggregate_voltage_table(active_power_profile, reactive_power_profile)
+        loading_table = self.power_sim_model.aggregate_loading_table(active_power_profile, reactive_power_profile)
 
         return voltage_table, loading_table
 
@@ -298,6 +380,23 @@ class PowerSim:
         reactive_power_profile: pd.DataFrame = None,
         opt_criteria=TotalEnergyLoss,
     ) -> int:
+        """
+        Determines the optimal tap position of a transformer based on specified optimization criteria.
+        Calculates either the tap position that minimizes total energy loss or minimizes voltage deviation.
+
+        Args:
+            active_power_profile (pd.DataFrame, optional): Active power profile for houses/nodes.
+            reactive_power_profile (pd.DataFrame, optional): Reactive power profile for houses/nodes.
+            opt_criteria (object, optional): Criteria for optimization:
+                - TotalEnergyLoss: Minimizes total energy loss (default).
+                - VoltageDeviation: Minimizes voltage deviation.
+
+        Returns:
+            int: Optimal tap position of the transformer.
+
+        Raises:
+            ValueError: If an invalid opt_criteria is provided.
+        """
 
         if active_power_profile is None:
             active_power_profile = self.active_power_profile
@@ -305,7 +404,7 @@ class PowerSim:
         if reactive_power_profile is None:
             reactive_power_profile = self.reactive_power_profile
 
-        grid_data = self.PowerSimModel.grid_data
+        grid_data = self.power_sim_model.grid_data
 
         update_tap = range(grid_data["transformer"]["tap_max"][0], grid_data["transformer"]["tap_min"][0] + 1)
 
@@ -316,14 +415,14 @@ class PowerSim:
         # output_data = {}
 
         for i in update_tap:
-            # output_data[f"tap{i}"] = self.PowerSimModel.batch_powerflow(
+            # output_data[f"tap{i}"] = self.power_sim_model.batch_powerflow(
             #     active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile, tap_value=i
             # )
 
             if opt_criteria == TotalEnergyLoss:
                 energy_loss_aggregate[f"{i}"] = sum(
                     (
-                        self.PowerSimModel.aggregate_loading_table(
+                        self.power_sim_model.aggregate_loading_table(
                             active_power_profile=active_power_profile,
                             reactive_power_profile=reactive_power_profile,
                             tap_value=i,
@@ -332,12 +431,14 @@ class PowerSim:
                 )
 
             elif opt_criteria == VoltageDeviation:
-                voltage_table[f"{i}"] = self.PowerSimModel.aggregate_voltage_table(
+                voltage_table[f"{i}"] = self.power_sim_model.aggregate_voltage_table(
                     active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
                 )
                 voltage_deviation[f"{i}"] = sum(
                     (pd.DataFrame(voltage_table[f"{i}"][["Max_Voltage", "Min_Voltage"]] - 1).max(axis=1)).tolist()
                 ) / len((pd.DataFrame(voltage_table[f"{i}"][["Max_Voltage", "Min_Voltage"]] - 1).max(axis=1)).tolist())
+
+        optimal_tap = 0
 
         if opt_criteria == TotalEnergyLoss:
             optimal_tap = int(min(energy_loss_aggregate, key=lambda k: energy_loss_aggregate[k]))
@@ -348,3 +449,4 @@ class PowerSim:
             # print(optimal_tap)
 
         return optimal_tap
+    
