@@ -4,7 +4,6 @@ In this file the processing of the power system should be done. Power system can
 """
 import pandas as pd
 import scipy as sp
-
 from power_grid_model import CalculationMethod, CalculationType, PowerGridModel, initialize_array
 from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
 
@@ -23,10 +22,11 @@ class LoadIDMismatch(Exception):
 
 class PowerFlow:
     """
-    In this class are the functionalities of assignment 2, 
-    including the initialization of the PGM grid and the aggregation functions for 
+    In this class are the functionalities of assignment 2,
+    including the initialization of the PGM grid and the aggregation functions for
     the voltage table and loading table
     """
+
     def __init__(self, grid_data: dict) -> None:
         """Load grid_data in class 'PowerFlow' upon instantiation
 
@@ -106,8 +106,8 @@ class PowerFlow:
         self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame
     ) -> pd.DataFrame:
         """
-        Aggregates power flow results into a table with voltage information. 
-        The table contains the timestamp as index and displays the following information per timestamp: 
+        Aggregates power flow results into a table with voltage information.
+        The table contains the timestamp as index and displays the following information per timestamp:
         - Maximum p.u. voltage of all the nodes for this timestamp
         - The node ID with the maximum p.u. voltage
         - Minimum p.u. voltage of all the nodes for this timestamp
@@ -131,11 +131,13 @@ class PowerFlow:
 
         voltage_table["Timestamp"] = active_power_profile.index.tolist()
         voltage_table["Max_Voltage"] = pd.DataFrame(node_data["u_pu"][:, :]).max(axis=1).tolist()
-        voltage_table["Max_Voltage_Node"] = \
-            node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmax(axis=1).tolist()]["id"][0, :]
+        voltage_table["Max_Voltage_Node"] = node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmax(axis=1).tolist()][
+            "id"
+        ][0, :]
         voltage_table["Min_Voltage"] = pd.DataFrame(node_data["u_pu"][:, :]).min(axis=1).tolist()
-        voltage_table["Min_Voltage_Node"] = \
-            node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmin(axis=1).tolist()]["id"][0, :]
+        voltage_table["Min_Voltage_Node"] = node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmin(axis=1).tolist()][
+            "id"
+        ][0, :]
 
         voltage_table.set_index("Timestamp", inplace=True)
 
@@ -145,9 +147,9 @@ class PowerFlow:
         self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0
     ) -> pd.DataFrame:
         """
-        Aggregates power flow results into a table with line loading information. 
-        The table contains the line ID as index and displays the following information per line: 
-        - Energy loss of the line across the timeline in kWh 
+        Aggregates power flow results into a table with line loading information.
+        The table contains the line ID as index and displays the following information per line:
+        - Energy loss of the line across the timeline in kWh
         - Maximum loading in p.u. of the line across the whole timeline
         - Timestamp of this maximum loading moment
         - Minimum loading in p.u. of the line across the whole timeline
@@ -190,14 +192,16 @@ class PowerFlow:
         min_loading_time = active_power_profile.index[min_loading_id]
 
         # Construct loading table
-        loading_table = pd.DataFrame({
-            "Line_ID": line_ids,
-            "Total_Loss": e_loss,
-            "Max_Loading": max_loading.values,
-            "Max_Loading_Timestamp": max_loading_time.values,
-            "Min_Loading": min_loading.values,
-            "Min_Loading_Timestamp": min_loading_time.values
-        })
+        loading_table = pd.DataFrame(
+            {
+                "Line_ID": line_ids,
+                "Total_Loss": e_loss,
+                "Max_Loading": max_loading.values,
+                "Max_Loading_Timestamp": max_loading_time.values,
+                "Min_Loading": min_loading.values,
+                "Min_Loading_Timestamp": min_loading_time.values,
+            }
+        )
 
         loading_table.set_index("Line_ID", inplace=True)
 
