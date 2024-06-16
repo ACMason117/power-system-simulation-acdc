@@ -14,22 +14,32 @@ import power_system_simulation.power_system_simulation as pss
 class TestPowerSim(unittest.TestCase):
     def setUp(self):
         # Load data from input_network_data.json
-        self.grid_data = json_deserialize_from_file("src/power_system_simulation/input_network_data_assign3.json")
+        self.grid_data = json_deserialize_from_file("src/power_system_simulation/input_network_data_2.json")
 
         # Load the Active Power Profile file
         try:
             self.active_power_profile = pd.read_parquet(
-                "src/power_system_simulation/active_power_profile_assign3.parquet"
+                "src/power_system_simulation/active_power_profile_2.parquet"
             )
         except FileNotFoundError:
             self.fail(
                 "Active Power Profile file not found. Please ensure 'active_power_profile.parquet' is in the correct location."
             )
 
+        # Load the EV active power profile file
+        try:
+            self.ev_active_power_profile = pd.read_parquet(
+                "src/power_system_simulation/ev_active_power_profile_2.parquet"
+            )
+        except FileNotFoundError:
+            self.fail(
+                "EV Active Power Profile file not found. Please ensure 'active_power_profile.parquet' is in the correct location."
+            )
+
         # Load the Reactive Power Profile file
         try:
             self.reactive_power_profile = pd.read_parquet(
-                "src/power_system_simulation/reactive_power_profile_assign3.parquet"
+                "src/power_system_simulation/reactive_power_profile_2.parquet"
             )
         except FileNotFoundError:
             self.fail(
@@ -65,6 +75,30 @@ class TestPowerSim(unittest.TestCase):
 
         # Compare with expected output
         pd.testing.assert_frame_equal(table, expected_output)
+
+    def test_EV_penetration(self):
+        num_houses = 150
+        penetration_level = 20
+        num_feeders = 7
+
+        voltage_table, loading_table = self.psm.ev_penetration(
+            num_houses=num_houses,
+            num_feeders=num_feeders,
+            penetration_level=penetration_level,
+            active_power_profile=self.active_power_profile,
+            reactive_power_profile=self.reactive_power_profile,
+            ev_active_power_profile=self.ev_active_power_profile
+        )
+
+        # Assertions to verify correct functionality
+        # Ensure voltage_table and loading_table are DataFrames
+        self.assertIsInstance(voltage_table, pd.DataFrame)
+        self.assertIsInstance(loading_table, pd.DataFrame)
+
+        # Check if voltage_table and loading_table have the expected structure
+        self.assertFalse(voltage_table.empty, "Voltage table should not be empty")
+        self.assertFalse(loading_table.empty, "Loading table should not be empty")
+
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import math
+import random
 
 try:
     import graph_processing as gp
@@ -37,6 +39,20 @@ class InvalidLVFeederIDError(Exception):
 class WrongFromNodeLVFeederError(Exception):
     """Raises WrongFromNodeLVFeederError if the LV feeder from_node does not correspond with the transformer to_node
 
+    Args:
+        Exception: _description_
+    """
+
+class NotEnoughHousesForEVassignment(Exception):
+    """ Raises error if there are not enough houses to assign EV profiles to
+    
+    Args:
+        Exception: _description_
+    """
+
+class NotEnoughEVprofilesForHouseAssignment(Exception):
+    """ Raises error if there are not enough EV profiles to assign to all houses
+    
     Args:
         Exception: _description_
     """
@@ -187,8 +203,86 @@ class PowerSim:
 
         return results_df
 
-    def ev_penetration():
-        pass
+    def ev_penetration(
+        self,
+        num_houses: int,
+        num_feeders: int,
+        penetration_level: float,  # Changed to float to represent percentage
+        active_power_profile: pd.DataFrame,
+        reactive_power_profile: pd.DataFrame,
+        ev_active_power_profile: pd.DataFrame
+    ) -> tuple:
+        """
+        Assign EV charging profiles based on penetration level and run power flow analysis.
+
+        Args:
+            num_houses (int): Number of houses in the grid.
+            num_feeders (int): Number of feeders in the grid.
+            penetration_level (float): Percentage of houses with EV charging.
+            active_power_profile (pd.DataFrame): Active power profile for houses.
+            reactive_power_profile (pd.DataFrame): Reactive power profile for houses.
+            ev_active_power_profile (pd.DataFrame): EV charging profiles.
+
+        Returns:
+            tuple: Aggregated voltage and loading tables.
+        """
+        
+        # Calculate number of EVs per feeder
+        total_evs = math.floor(penetration_level * num_houses / 100)
+        evs_per_feeder = math.floor(total_evs / num_feeders)
+
+        grid_data = self.grid_data  # Assuming grid_data is an attribute of self
+        
+        # Initialize the GraphProcessor to find downstream vertices
+        edge_vertex_id_pairs = list(zip(grid_data["line"]["from_node"], grid_data["line"]["to_node"])) + \
+                               list(zip(grid_data["transformer"]["from_node"], grid_data["transformer"]["to_node"]))
+        edge_enabled = [(f_status == 1 and t_status == 1) for f_status, t_status in 
+                        zip(grid_data["line"]["from_status"], grid_data["line"]["to_status"])]
+        edge_enabled += [(grid_data["transformer"]["from_status"][0] == 1 and grid_data["transformer"]["to_status"][0] == 1)]
+        source_vertex_id = grid_data["source"]["node"][0]
+        edge_ids = list(grid_data["line"]["id"]) + list(grid_data["transformer"]["id"])
+        vertex_ids = grid_data["node"]["id"]
+
+        test4 = gp.GraphProcessor(
+            vertex_ids=vertex_ids,
+            edge_ids=edge_ids,
+            edge_vertex_id_pairs=edge_vertex_id_pairs,
+            edge_enabled=edge_enabled,
+            source_vertex_id=source_vertex_id
+        )
+
+        transformer_to_node = grid_data["transformer"]["to_node"][0]
+
+        assigned_profiles = set()
+        for line in grid_data["line"]:
+            if line["from_node"] == transformer_to_node:
+                downstream_vertices = test4.find_downstream_vertices(line["id"])
+                sym_load_nodes = set(grid_data["sym_load"]["node"])
+                common_nodes = sym_load_nodes.intersection(downstream_vertices)
+
+                common_nodes_list = sorted(common_nodes)
+
+                # Check if the number of EVs per feeder is greater than the available houses
+                if len(common_nodes_list) < evs_per_feeder:
+                    evs_per_feeder = len(common_nodes_list)
+
+                selected_houses = random.sample(common_nodes_list, evs_per_feeder)
+
+                available_ev_profiles = list(set(ev_active_power_profile.columns) - assigned_profiles)
+                selected_ev_profiles = random.sample(available_ev_profiles, evs_per_feeder)
+                assigned_profiles.update(selected_ev_profiles)
+
+                # Ensure the house and EV profile are present in the respective DataFrames
+                for house, ev_profile in zip(selected_houses, selected_ev_profiles):
+                    if house in active_power_profile.columns and ev_profile in ev_active_power_profile.columns:
+                        active_power_profile[house] += ev_active_power_profile[ev_profile]  
+
+        # Run time-series power flow after assigning EV profiles
+        self.grid_data = grid_data  # Update grid data with new sym_load values if needed
+        voltage_table = self.PowerSimModel.aggregate_voltage_table(active_power_profile, reactive_power_profile)
+        loading_table = self.PowerSimModel.aggregate_loading_table(active_power_profile, reactive_power_profile)
+
+        return voltage_table, loading_table
 
     def optimal_tap_position(
         self,
