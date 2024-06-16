@@ -78,19 +78,21 @@ class NotConnectedLineError(Exception):
 
 
 class TotalEnergyLoss:
-    """ Criterium for optimization: Minimizes total energy loss"""
+    """Criterium for optimization: Minimizes total energy loss"""
+
     pass
 
 
 class VoltageDeviation:
-    """ Criterium for optimization: Minimizes voltage deviation"""
+    """Criterium for optimization: Minimizes voltage deviation"""
+
     pass
 
 
 class PowerSim:
     """
-    In this class are the functionalities of assignment 3, 
-    including the initialization of the grid and the functions for EV penetration, 
+    In this class are the functionalities of assignment 3,
+    including the initialization of the grid and the functions for EV penetration,
     optimal tap position and N-1 calculations
     """
 
@@ -107,17 +109,17 @@ class PowerSim:
         Args:
             grid_data (dict): Dictionary containing information about the power grid.
             lv_feeders (list, optional): List of IDs representing low voltage (LV) feeders in the grid.
-            active_power_profile (pd.DataFrame, optional): 
+            active_power_profile (pd.DataFrame, optional):
                 DataFrame containing active power profiles for houses/nodes
-            reactive_power_profile (pd.DataFrame, optional): 
+            reactive_power_profile (pd.DataFrame, optional):
                 DataFrame containing reactive power profiles for houses/nodes
 
         Raises:
             NotExactlyOneSourceError: Raised if the grid data does not contain exactly one source.
             NotExactlyOneTransformerError: Raised if the grid data does not contain exactly one transformer.
-            InvalidLVFeederIDError: Raised if any LV feeder ID in 
+            InvalidLVFeederIDError: Raised if any LV feeder ID in
                 `lv_feeders` is not a valid line ID in `grid_data`.
-            WrongFromNodeLVFeederError: Raised if the from_node of any 
+            WrongFromNodeLVFeederError: Raised if the from_node of any
                 LV feeder line does not correspond to the to_node of the transformer in the grid.
             CycleInGraphError: Raised if the power grid representation (graph) contains cycles.
 
@@ -185,9 +187,9 @@ class PowerSim:
         disabled_edge_id: int,
     ) -> pd.DataFrame:
         """
-        Determines an alternative grid topology when a given line is out of service. 
+        Determines an alternative grid topology when a given line is out of service.
         The user will provide the Line ID which is going to be out of service.
-        The function returns a table which summarizes the results, 
+        The function returns a table which summarizes the results,
         each row in the table is one alternative scenario. The table contains the following columns:
         - The alternative Line ID to be connected
         - The maximum loading among of lines and timestamps
@@ -449,4 +451,3 @@ class PowerSim:
             # print(optimal_tap)
 
         return optimal_tap
-    
