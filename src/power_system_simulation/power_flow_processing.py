@@ -173,10 +173,6 @@ class PowerFlow:
         p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
         p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
 
-        # Extract power data
-        p_from = pd.DataFrame(line_data["p_from"][:, :], columns=line_ids)
-        p_to = pd.DataFrame(line_data["p_to"][:, :], columns=line_ids)
-
         # Calculate power loss
         p_loss = (p_from + p_to) * 1e-3
 
