@@ -62,6 +62,13 @@ class TestPowerSim(unittest.TestCase):
         # declare new PowerSimModel object
         self.psm = pss.PowerSim(grid_data=self.grid_data)
 
+    def test_network_plotter(self):
+        void_test = self.psm.network_plotter(plot_criteria=gp.AllEdges)  # Testcase 1 of find network_plotter
+        assert void_test == None
+
+        void_test = self.psm.network_plotter(plot_criteria=gp.EnabledEdges)  # Testcase 2 of find network_plotter
+        assert void_test == None
+
     def test_N1(self):
         disabled_edge_id = 16
         table = self.psm.n1_calculations(

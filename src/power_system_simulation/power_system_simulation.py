@@ -454,3 +454,38 @@ class PowerSim:
             # print(optimal_tap)
 
         return optimal_tap
+    
+    def network_plotter(self, plot_criteria=gp.AllEdges)-> None:
+        # Rewriting the grid dataframe to assignment 1 list:
+        grid_data = self.grid_data
+
+        edge_vertex_id_pairs = list(zip(grid_data["line"]["from_node"], grid_data["line"]["to_node"])) + list(
+            zip(grid_data["transformer"]["from_node"], grid_data["transformer"]["to_node"])
+        )
+        edge_enabled = []
+        for i in grid_data["line"]["id"]:
+            index = np.where(grid_data["line"]["id"] == i)
+            if grid_data["line"][index]["from_status"] == 1 & grid_data["line"][index]["to_status"] == 1:
+                edge_enabled = edge_enabled + [True]
+            else:
+                edge_enabled = edge_enabled + [False]
+        if grid_data["transformer"][0]["from_status"] == 1 & grid_data["transformer"][0]["to_status"] == 1:
+            edge_enabled = edge_enabled + [True]
+        else:
+            edge_enabled = edge_enabled + [False]
+        source_vertex_id = grid_data["source"]["node"][0]
+        edge_ids = list(grid_data["line"]["id"]) + list(grid_data["transformer"]["id"])
+        vertex_ids = grid_data["node"]["id"]
+
+        # Find alternative edges
+
+        G = gp.GraphProcessor(
+            vertex_ids=vertex_ids,
+            edge_ids=edge_ids,
+            edge_vertex_id_pairs=edge_vertex_id_pairs,
+            edge_enabled=edge_enabled,
+            source_vertex_id=source_vertex_id,
+        )
+
+        # plot network
+        G.graph_plotter(plot_criteria=plot_criteria)
