@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Big dataset for assignment 3
+active_power_profile_big.parquet
+reactive_power_profile_big.parquet
+ev_active_power_profile_big.parquet
+input_network_data_big.json
+meta_data_big.json
+
 # C extensions
 *.so
 
