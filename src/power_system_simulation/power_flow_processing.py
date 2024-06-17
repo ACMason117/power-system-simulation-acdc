@@ -163,7 +163,7 @@ class PowerFlow:
         min_voltage_ids = node_ids[min_voltage_indices]
 
         # Assuming voltage_table is a pandas DataFrame
-        voltage_table["Min_Voltage_Node"] = max_voltage_ids
+        voltage_table["Min_Voltage_Node"] = min_voltage_ids
         voltage_table.set_index("Timestamp", inplace=True)
 
         return voltage_table
