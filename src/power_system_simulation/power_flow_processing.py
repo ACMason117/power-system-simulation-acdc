@@ -2,8 +2,8 @@
 """
 In this file the processing of the power system should be done. Power system can be given in a different test file. 
 """
-import pandas as pd
 import numpy as np
+import pandas as pd
 import scipy as sp
 from power_grid_model import CalculationMethod, CalculationType, PowerGridModel, initialize_array
 from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
@@ -134,18 +134,19 @@ class PowerFlow:
         min_voltage = voltage_data.min(axis=1)
         min_voltage_node = node_data["id"][np.arange(voltage_data.shape[0]), voltage_data.argmin(axis=1)]
 
-        voltage_table = pd.DataFrame({
-            "Timestamp": active_power_profile.index,
-            "Max_Voltage": max_voltage,
-            "Max_Voltage_Node": max_voltage_node,
-            "Min_Voltage": min_voltage,
-            "Min_Voltage_Node": min_voltage_node
-        })
+        voltage_table = pd.DataFrame(
+            {
+                "Timestamp": active_power_profile.index,
+                "Max_Voltage": max_voltage,
+                "Max_Voltage_Node": max_voltage_node,
+                "Min_Voltage": min_voltage,
+                "Min_Voltage_Node": min_voltage_node,
+            }
+        )
 
         voltage_table.set_index("Timestamp", inplace=True)
 
         return voltage_table
-
 
     def aggregate_loading_table(
         self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0
