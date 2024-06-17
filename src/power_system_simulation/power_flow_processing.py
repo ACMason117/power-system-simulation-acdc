@@ -136,8 +136,8 @@ class PowerFlow:
         #     "id"
         # ][0, :]
         # Extract voltage data and node IDs from node_data
-        u_pu = node_data["u_pu"][0, :] 
-        node_ids = node_data["id"][0, :]  
+        u_pu = node_data["u_pu"][0, :]
+        node_ids = node_data["id"][0, :]
 
         # Find the indices of the maximum voltage in each row (axis=1)
         max_voltage_indices = np.argmax(u_pu)
