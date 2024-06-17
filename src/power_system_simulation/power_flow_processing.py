@@ -2,6 +2,7 @@
 """
 In this file the processing of the power system should be done. Power system can be given in a different test file. 
 """
+import numpy as np
 import pandas as pd
 import scipy as sp
 from power_grid_model import CalculationMethod, CalculationType, PowerGridModel, initialize_array
@@ -131,14 +132,38 @@ class PowerFlow:
 
         voltage_table["Timestamp"] = active_power_profile.index.tolist()
         voltage_table["Max_Voltage"] = pd.DataFrame(node_data["u_pu"][:, :]).max(axis=1).tolist()
-        voltage_table["Max_Voltage_Node"] = node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmax(axis=1).tolist()][
-            "id"
-        ][0, :]
-        voltage_table["Min_Voltage"] = pd.DataFrame(node_data["u_pu"][:, :]).min(axis=1).tolist()
-        voltage_table["Min_Voltage_Node"] = node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmin(axis=1).tolist()][
-            "id"
-        ][0, :]
+        # voltage_table["Max_Voltage_Node"] = node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmax(axis=1).tolist()][
+        #     "id"
+        # ][0, :]
+        # Extract voltage data and node IDs from node_data
+        u_pu = node_data["u_pu"][0, :] 
+        node_ids = node_data["id"][0, :]  
 
+        # Find the indices of the maximum voltage in each row (axis=1)
+        max_voltage_indices = np.argmax(u_pu)
+
+        # Retrieve the node IDs corresponding to these indices
+        max_voltage_ids = node_ids[max_voltage_indices]
+
+        # Assuming voltage_table is a pandas DataFrame
+        voltage_table["Max_Voltage_Node"] = max_voltage_ids
+
+        voltage_table["Min_Voltage"] = pd.DataFrame(node_data["u_pu"][:, :]).min(axis=1).tolist()
+        # voltage_table["Min_Voltage_Node"] = node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmin(axis=1).tolist()][
+        #     "id"
+        # ][0, :]
+        # Extract voltage data and node IDs from node_data
+        u_pu = node_data["u_pu"][0, :]  # Shape: (num_nodes, num_timesteps)
+        node_ids = node_data["id"][0, :]  # Shape: (num_nodes,)
+
+        # Find the indices of the min voltage in each row (axis=1)
+        min_voltage_indices = np.argmin(u_pu)
+
+        # Retrieve the node IDs corresponding to these indices
+        min_voltage_ids = node_ids[min_voltage_indices]
+
+        # Assuming voltage_table is a pandas DataFrame
+        voltage_table["Min_Voltage_Node"] = max_voltage_ids
         voltage_table.set_index("Timestamp", inplace=True)
 
         return voltage_table
