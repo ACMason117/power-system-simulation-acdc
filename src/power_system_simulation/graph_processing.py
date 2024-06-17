@@ -373,9 +373,9 @@ class GraphProcessor:
         Returns:
             _description_
         """
-        fig, ax = plt.subplots(1, 1, figsize=[20, 20])
         graph = nx.Graph()
         graph.add_nodes_from(self.vertex_ids)
+
         if plot_criteria == EnabledEdges:
             enabled_edges = [num for num, m in zip(self.edge_vertex_id_pairs, self.edge_enabled) if m]
             graph.add_edges_from(enabled_edges)
@@ -383,9 +383,11 @@ class GraphProcessor:
             graph.add_edges_from(self.edge_vertex_id_pairs)
 
         if len(self.vertex_ids) > 20:
+            fig, ax = plt.subplots(1, 1, figsize=[15, 15])
             nx.draw(graph, with_labels=True, ax=ax, node_size=60, font_size=10)
         else:
-            nx.draw(graph, with_labels=True, ax=ax, node_size=210, font_size=16)
+            fig, ax = plt.subplots(1, 1, figsize=[10, 10])
+            nx.draw(graph, with_labels=True, ax=ax, node_size=400, font_size=24)
 
         plt.suptitle("Network graph", weight="bold")
         print(fig)
