@@ -184,10 +184,9 @@ class PowerSim:
 
     def n1_calculations(
         self,
-        grid_data: dict,
-        active_power_profile: pd.DataFrame,
-        reactive_power_profile: pd.DataFrame,
         disabled_edge_id: int,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
     ) -> pd.DataFrame:
         """
         Determines an alternative grid topology when a given line is out of service.
@@ -213,6 +212,14 @@ class PowerSim:
             NotConnectedLineError: Raised if the disabled_edge_id is not
                 connected at both ends (from_status and to_status should be 1).
         """
+
+        if active_power_profile is None:
+            active_power_profile = self.active_power_profile
+
+        if reactive_power_profile is None:
+            reactive_power_profile = self.reactive_power_profile
+
+        grid_data = self.grid_data
 
         # Check if disabled_edge_id is a valid line ID
         if disabled_edge_id not in grid_data["line"]["id"]:
@@ -299,9 +306,9 @@ class PowerSim:
         num_houses: int,
         num_feeders: int,
         penetration_level: float,  # Changed to float to represent percentage
-        active_power_profile: pd.DataFrame,
-        reactive_power_profile: pd.DataFrame,
         ev_active_power_profile: pd.DataFrame,
+        active_power_profile: pd.DataFrame = None,
+        reactive_power_profile: pd.DataFrame = None,
     ) -> tuple:
         """
         Assign EV charging profiles based on penetration level and run power flow analysis.
@@ -317,6 +324,14 @@ class PowerSim:
         Returns:
             tuple: Aggregated voltage and loading tables.
         """
+
+        if active_power_profile is None:
+            active_power_profile = self.active_power_profile
+
+        if reactive_power_profile is None:
+            reactive_power_profile = self.reactive_power_profile
+
+        grid_data = self.power_sim_model.grid_data
 
         # Calculate number of EVs per feeder
         total_evs = math.floor(penetration_level * num_houses / 100)
