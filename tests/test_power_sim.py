@@ -112,6 +112,54 @@ class TestPowerSim(unittest.TestCase):
         self.assertFalse(voltage_table.empty, "Voltage table should not be empty")
         self.assertFalse(loading_table.empty, "Loading table should not be empty")
 
+        expected_volt = pd.DataFrame(
+            {
+                "Timestamp": [
+                    pd.Timestamp("2025-01-01 00:00:00"),
+                    pd.Timestamp("2025-01-01 00:15:00"),
+                    pd.Timestamp("2025-01-01 00:30:00"),
+                    pd.Timestamp("2025-01-01 00:45:00"),
+                    pd.Timestamp("2025-01-01 01:00:00"),
+                ],
+                "Max_Voltage": [1.072931, 1.075911, 1.069725, 1.073244, 1.072924],
+                "Max_Voltage_Node": [1, 1, 1, 1, 1],
+                "Min_Voltage": [1.049819, 1.050022, 1.049603, 1.049842, 1.049819],
+                "Min_Voltage_Node": [0, 0, 0, 0, 0],
+            }
+        )
+        expected_volt.set_index("Timestamp", inplace=True)
+        expected_volt["Max_Voltage_Node"] = expected_volt["Max_Voltage_Node"].astype(np.int32)
+        expected_volt["Min_Voltage_Node"] = expected_volt["Min_Voltage_Node"].astype(np.int32)
+
+        pd.testing.assert_frame_equal(voltage_table.head(), expected_volt)
+
+        expected_load = pd.DataFrame(
+            {
+                "Line_ID": [16, 17, 18, 19, 20],
+                "Total_Loss": [26.709511, 1.128073, 9.100636, 1.220324, 27.361620],
+                "Max_Loading": [6.869324e-05, 1.653650e-03, 3.414478e-05, 1.543576e-03, 7.086133e-05],
+                "Max_Loading_Timestamp": [
+                    pd.Timestamp("2025-01-04 06:30:00"),
+                    pd.Timestamp("2025-01-04 09:45:00"),
+                    pd.Timestamp("2025-01-07 10:45:00"),
+                    pd.Timestamp("2025-01-07 10:45:00"),
+                    pd.Timestamp("2025-01-07 10:45:00"),
+                ],
+                "Min_Loading": [1.253601e-05, 2.697708e-04, 5.617314e-06, 2.496785e-04, 1.172002e-05],
+                "Min_Loading_Timestamp": [
+                    pd.Timestamp("2025-01-08 12:30:00"),
+                    pd.Timestamp("2025-01-08 11:30:00"),
+                    pd.Timestamp("2025-01-05 17:45:00"),
+                    pd.Timestamp("2025-01-05 17:45:00"),
+                    pd.Timestamp("2025-01-02 14:30:00"),
+                ],
+            }
+        )
+        expected_load["Line_ID"] = expected_load["Line_ID"].astype(np.int32)
+        expected_load.set_index("Line_ID", inplace=True)
+
+        pd.testing.assert_frame_equal(loading_table.head(), expected_load)
+
     def test_optimal_tap_position_energy_loss(self):
         optimal_tap = self.psm.optimal_tap_position(
             active_power_profile=self.active_power_profile,
@@ -122,6 +170,10 @@ class TestPowerSim(unittest.TestCase):
         # Assertions to verify correct functionality for energy loss criteria
         self.assertIsInstance(optimal_tap, int, "Optimal tap position should be an integer")
 
+        expected = 5
+
+        self.assertEqual(optimal_tap, expected)
+
     def test_optimal_tap_position_voltage_deviation(self):
         optimal_tap = self.psm.optimal_tap_position(
             active_power_profile=self.active_power_profile,
@@ -131,6 +183,10 @@ class TestPowerSim(unittest.TestCase):
 
         # Assertions to verify correct functionality for voltage deviation criteria
         self.assertIsInstance(optimal_tap, int, "Optimal tap position should be an integer")
+
+        expected = 1
+
+        self.assertEqual(optimal_tap, expected)
 
     def test_InvalidLVFeederIDError(self):
 
