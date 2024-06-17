@@ -4,12 +4,11 @@ This is a skeleton for the graph processing assignment.
 We define a graph processor class with some function skeletons. Test
 """
 
-from typing import List, Tuple
-import networkx as nx
-import matplotlib.pyplot as plt
 from enum import IntEnum
-# import numpy as np
-# import scipy as sp
+from typing import List, Tuple
+
+import networkx as nx
+
 
 class EnabledEdges(IntEnum):
     """Criterium for plotting: Only enabled edges"""
@@ -366,7 +365,6 @@ class GraphProcessor:
 
         # Return alternative edges list
         return alternative_edges
-    
 
     def graph_plotter(self, plot_criteria=EnabledEdges) -> None:
         """Prints GraphProcessor using NetworkX.
@@ -374,17 +372,15 @@ class GraphProcessor:
         Returns:
             _description_
         """
-        G = nx.Graph()
-        G.add_nodes_from(self.vertex_ids)
-        if (plot_criteria==EnabledEdges):
+        graph = nx.Graph()
+        graph.add_nodes_from(self.vertex_ids)
+        if plot_criteria == EnabledEdges:
             enabled_edges = [num for num, m in zip(self.edge_vertex_id_pairs, self.edge_enabled) if m]
-            G.add_edges_from(enabled_edges)
-        elif (plot_criteria==AllEdges):
-            G.add_edges_from(self.edge_vertex_id_pairs)
-        
-        nx.draw(G, with_labels=True)
+            graph.add_edges_from(enabled_edges)
+        elif plot_criteria == AllEdges:
+            graph.add_edges_from(self.edge_vertex_id_pairs)
 
-
+        nx.draw(graph, with_labels=True)
 
 
 # other functions not dependent on specific class

@@ -454,8 +454,14 @@ class PowerSim:
             # print(optimal_tap)
 
         return optimal_tap
-    
-    def network_plotter(self, plot_criteria=gp.AllEdges)-> None:
+
+    def network_plotter(self, plot_criteria=gp.EnabledEdges) -> None:
+        """Plots object network.
+
+        Args:
+            plot_criteria: _description_. Defaults to graph_processing.EnabledEdges.
+            Possible to use graph_processing.AllEdges.
+        """
         # Rewriting the grid dataframe to assignment 1 list:
         grid_data = self.grid_data
 
@@ -479,7 +485,7 @@ class PowerSim:
 
         # Find alternative edges
 
-        G = gp.GraphProcessor(
+        graph = gp.GraphProcessor(
             vertex_ids=vertex_ids,
             edge_ids=edge_ids,
             edge_vertex_id_pairs=edge_vertex_id_pairs,
@@ -488,4 +494,4 @@ class PowerSim:
         )
 
         # plot network
-        G.graph_plotter(plot_criteria=plot_criteria)
+        graph.graph_plotter(plot_criteria=plot_criteria)
