@@ -97,7 +97,7 @@ class PowerFlow:
 
         # Run Newton-Raphson power flow
         output_data = self.model.calculate_power_flow(
-            update_data=update_data, calculation_method=CalculationMethod.newton_raphson
+            update_data=update_data, calculation_method=CalculationMethod.newton_raphson, threading=0
         )
 
         return output_data
