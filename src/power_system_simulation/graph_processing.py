@@ -7,6 +7,7 @@ We define a graph processor class with some function skeletons. Test
 from enum import IntEnum
 from typing import List, Tuple
 
+import matplotlib.pyplot as plt
 import networkx as nx
 
 
@@ -372,6 +373,7 @@ class GraphProcessor:
         Returns:
             _description_
         """
+        fig, ax = plt.subplots(1, 1, figsize=[20, 20])
         graph = nx.Graph()
         graph.add_nodes_from(self.vertex_ids)
         if plot_criteria == EnabledEdges:
@@ -380,7 +382,9 @@ class GraphProcessor:
         elif plot_criteria == AllEdges:
             graph.add_edges_from(self.edge_vertex_id_pairs)
 
-        nx.draw(graph, with_labels=True)
+        nx.draw(graph, with_labels=True, ax=ax, node_size=60, font_size=10)
+        plt.suptitle("Network graph", weight="bold")
+        print(fig)
 
 
 # other functions not dependent on specific class
