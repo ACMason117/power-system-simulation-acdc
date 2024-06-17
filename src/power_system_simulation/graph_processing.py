@@ -4,10 +4,18 @@ This is a skeleton for the graph processing assignment.
 We define a graph processor class with some function skeletons. Test
 """
 
+from enum import IntEnum
 from typing import List, Tuple
 
-# import numpy as np
-# import scipy as sp
+import networkx as nx
+
+
+class EnabledEdges(IntEnum):
+    """Criterium for plotting: Only enabled edges"""
+
+
+class AllEdges(IntEnum):
+    """Criterium for plotting: All edges"""
 
 
 class IDNotFoundError(Exception):
@@ -357,6 +365,22 @@ class GraphProcessor:
 
         # Return alternative edges list
         return alternative_edges
+
+    def graph_plotter(self, plot_criteria=EnabledEdges) -> None:
+        """Prints GraphProcessor using NetworkX.
+
+        Returns:
+            _description_
+        """
+        graph = nx.Graph()
+        graph.add_nodes_from(self.vertex_ids)
+        if plot_criteria == EnabledEdges:
+            enabled_edges = [num for num, m in zip(self.edge_vertex_id_pairs, self.edge_enabled) if m]
+            graph.add_edges_from(enabled_edges)
+        elif plot_criteria == AllEdges:
+            graph.add_edges_from(self.edge_vertex_id_pairs)
+
+        nx.draw(graph, with_labels=True)
 
 
 # other functions not dependent on specific class

@@ -58,3 +58,25 @@ def test_downstream_vertices():
 
     downstream_vertices = test3.find_downstream_vertices(3)  # Testcase 2 of find downstream vertices
     assert downstream_vertices == [4]
+
+
+def test_graph_plotter():
+    vertex_ids = [0, 2, 4]  # All unique vertex ids
+    edge_ids = [1, 3]  # All unique edge ids
+    edge_vertex_id_pairs = [(0, 2), (2, 4)]  # Egde 1 and egde 3
+    edge_enabled = [True, True]  # Whether each edge is enabled or disabled
+    source_vertex_id = 0  # ID of the source vertex
+
+    test4 = tp.GraphProcessor(
+        vertex_ids=vertex_ids,
+        edge_ids=edge_ids,
+        edge_vertex_id_pairs=edge_vertex_id_pairs,
+        edge_enabled=edge_enabled,
+        source_vertex_id=source_vertex_id,
+    )
+
+    void_test = test4.graph_plotter(plot_criteria=tp.AllEdges)  # Testcase 1 of find graph_plotter
+    assert void_test == None
+
+    void_test = test4.graph_plotter(plot_criteria=tp.EnabledEdges)  # Testcase 2 of graph_plotter
+    assert void_test == None
