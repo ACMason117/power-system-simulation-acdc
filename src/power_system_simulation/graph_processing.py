@@ -382,7 +382,11 @@ class GraphProcessor:
         elif plot_criteria == AllEdges:
             graph.add_edges_from(self.edge_vertex_id_pairs)
 
-        nx.draw(graph, with_labels=True, ax=ax, node_size=60, font_size=10)
+        if len(self.vertex_ids) > 20:
+            nx.draw(graph, with_labels=True, ax=ax, node_size=60, font_size=10)
+        else:
+            nx.draw(graph, with_labels=True, ax=ax, node_size=210, font_size=16)
+
         plt.suptitle("Network graph", weight="bold")
         print(fig)
 
