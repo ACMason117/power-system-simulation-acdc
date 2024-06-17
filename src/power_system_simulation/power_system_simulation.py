@@ -1,5 +1,12 @@
+"""
+In this package there function are provided regarding the simulation a power system. 
+
+Power system should be given in PGM input format. 
+"""
+
 import math
 import random
+from enum import IntEnum
 
 import numpy as np
 import pandas as pd
@@ -7,7 +14,7 @@ import pandas as pd
 try:
     import graph_processing as gp
     import power_flow_processing as pfp
-except:
+except ImportError:
     import power_system_simulation.graph_processing as gp
     import power_system_simulation.power_flow_processing as pfp
 
@@ -17,7 +24,7 @@ class NotExactlyOneSourceError(Exception):
     """Raises MoreThanOneSourceError if there is not exactly one source
 
     Args:
-        Exception: _description_
+        Exception:
     """
 
 
@@ -77,16 +84,12 @@ class NotConnectedLineError(Exception):
     """
 
 
-class TotalEnergyLoss:
+class TotalEnergyLoss(IntEnum):
     """Criterium for optimization: Minimizes total energy loss"""
 
-    pass
 
-
-class VoltageDeviation:
+class VoltageDeviation(IntEnum):
     """Criterium for optimization: Minimizes voltage deviation"""
-
-    pass
 
 
 class PowerSim:
