@@ -3,6 +3,7 @@
 In this file the processing of the power system should be done. Power system can be given in a different test file. 
 """
 import pandas as pd
+import numpy as np
 import scipy as sp
 from power_grid_model import CalculationMethod, CalculationType, PowerGridModel, initialize_array
 from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
@@ -125,23 +126,26 @@ class PowerFlow:
             active_power_profile=active_power_profile, reactive_power_profile=reactive_power_profile
         )
 
-        voltage_table = pd.DataFrame()
-
         node_data = output_data["node"]
+        voltage_data = node_data["u_pu"]
 
-        voltage_table["Timestamp"] = active_power_profile.index.tolist()
-        voltage_table["Max_Voltage"] = pd.DataFrame(node_data["u_pu"][:, :]).max(axis=1).tolist()
-        voltage_table["Max_Voltage_Node"] = node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmax(axis=1).tolist()][
-            "id"
-        ][0, :]
-        voltage_table["Min_Voltage"] = pd.DataFrame(node_data["u_pu"][:, :]).min(axis=1).tolist()
-        voltage_table["Min_Voltage_Node"] = node_data[:, pd.DataFrame(node_data["u_pu"][:, :]).idxmin(axis=1).tolist()][
-            "id"
-        ][0, :]
+        max_voltage = voltage_data.max(axis=1)
+        max_voltage_node = node_data["id"][np.arange(voltage_data.shape[0]), voltage_data.argmax(axis=1)]
+        min_voltage = voltage_data.min(axis=1)
+        min_voltage_node = node_data["id"][np.arange(voltage_data.shape[0]), voltage_data.argmin(axis=1)]
+
+        voltage_table = pd.DataFrame({
+            "Timestamp": active_power_profile.index,
+            "Max_Voltage": max_voltage,
+            "Max_Voltage_Node": max_voltage_node,
+            "Min_Voltage": min_voltage,
+            "Min_Voltage_Node": min_voltage_node
+        })
 
         voltage_table.set_index("Timestamp", inplace=True)
 
         return voltage_table
+
 
     def aggregate_loading_table(
         self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0
