@@ -48,14 +48,14 @@ The object saves:
 
 The class contains the functions: 
 1. `batch_powerflow(`
-   `     self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0`
-   ` ) -> dict`
+   `self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0`
+   `) -> dict`
 2. `aggregate_voltage_table(`
-   `     self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame`
-   ` ) -> pd.DataFrame`
+   `self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame`
+   `) -> pd.DataFrame`
 3. `aggregate_loading_table(`
-   `     self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0`
-   ` ) -> pd.DataFrame`
+   `self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0`
+   `) -> pd.DataFrame`
 
 
 # Assignment 3
@@ -64,12 +64,12 @@ This class defines and validates a grid based on `power_flow_processing.PowerFlo
 
 It is initialized with parameters:
 `def __init__(`
-`        self,`
-`        grid_data: dict,`
-`        lv_feeders: list = None,`
-`        active_power_profile: pd.DataFrame = None,`
-`        reactive_power_profile: pd.DataFrame = None,`
-`    ) -> None`
+`self,`
+`grid_data: dict,`
+`lv_feeders: list = None,`
+`active_power_profile: pd.DataFrame = None,`
+`reactive_power_profile: pd.DataFrame = None,`
+`) -> None`
 
 The object saves:
 `self.power_sim_model = pfp.PowerFlow(grid_data=grid_data)`
@@ -82,25 +82,25 @@ This data is used if no input is provided to the class functions.
 
 The class contains the functions: 
 1. `n1_calculations(`
-   `     self,`
-   `     grid_data: dict,`
-   `     active_power_profile: pd.DataFrame,`
-   `     reactive_power_profile: pd.DataFrame,`
-   `     disabled_edge_id: int,`
-   ` ) -> pd.DataFrame`
+   `self,`
+   `grid_data: dict,`
+   `active_power_profile: pd.DataFrame,`
+   `reactive_power_profile: pd.DataFrame,`
+   `disabled_edge_id: int,`
+   `) -> pd.DataFrame`
 2. `ev_penetration(`
-   `     self,`
-   `     num_houses: int,`
-   `     num_feeders: int,`
-   `     penetration_level: float,`
-   `     active_power_profile: pd.DataFrame,`
-   `     reactive_power_profile: pd.DataFrame,`
-   `     ev_active_power_profile: pd.DataFrame,`
-   ` ) -> tuple`
+   `self,`
+   `num_houses: int,`
+   `num_feeders: int,`
+   `penetration_level: float,`
+   `active_power_profile: pd.DataFrame,`
+   `reactive_power_profile: pd.DataFrame,`
+   `ev_active_power_profile: pd.DataFrame,`
+   `) -> tuple`
 3. `optimal_tap_position(`
-   `     self,`
-   `     active_power_profile: pd.DataFrame = None,`
-   `     reactive_power_profile: pd.DataFrame = None,`
-   `     opt_criteria=TotalEnergyLoss,`
-   ` ) -> int`
+   `self,`
+   `active_power_profile: pd.DataFrame = None,`
+   `reactive_power_profile: pd.DataFrame = None,`
+   `opt_criteria=TotalEnergyLoss,`
+   `) -> int`
 4. `network_plotter(self, plot_criteria=graph_processing.EnabledEdges) -> None`
