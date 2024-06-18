@@ -1,7 +1,29 @@
-# power_flow_processing.py
 """
-In this file the processing of the power system should be done. Power system can be given in a different test file. 
+`power_flow_processing.py` contains the class `PowerFlow`. 
+This class defines and validates a grid based on `power_grid_model.PowerGridModel`
+
+It is initialized with parameters:
+`def __init__(self, grid_data: dict) -> None`
+
+`grid_data` must be provided in `power_grid_model` format. Refer to: 
+https://power-grid-model.readthedocs.io/en/stable/quickstart.html#input-data
+
+The object saves:
+1. `self.model`
+2. `self.grid_data`
+
+The class contains the functions: 
+1. `batch_powerflow(`
+   `     self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0`
+   ` ) -> dict`
+2. `aggregate_voltage_table(`
+   `     self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame`
+   ` ) -> pd.DataFrame`
+3. `aggregate_loading_table(`
+   `     self, active_power_profile: pd.DataFrame, reactive_power_profile: pd.DataFrame, tap_value=0`
+   ` ) -> pd.DataFrame`
 """
+
 import numpy as np
 import pandas as pd
 import scipy as sp
@@ -29,12 +51,10 @@ class PowerFlow:
     """
 
     def __init__(self, grid_data: dict) -> None:
-        """Load grid_data in class 'PowerFlow' upon instantiation
+        """Load and validate grid_data in class 'PowerFlow' upon instantiation
 
         Args:
             grid_data: Power grid input data. Class dict.
-            active_power_profile: Active power profile time data. Class pyarrow.table.
-            reactive_power_profile: Reactive power profile time data. Class pyarrow.table.
         """
 
         assert_valid_input_data(input_data=grid_data, symmetric=True, calculation_type=CalculationType.power_flow)
