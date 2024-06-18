@@ -387,9 +387,13 @@ class GraphProcessor:
             nx.draw(graph, with_labels=True, ax=ax, node_size=60, font_size=10)
         else:
             fig, ax = plt.subplots(1, 1, figsize=[10, 10])
-            nx.draw(graph, with_labels=True, ax=ax, node_size=400, font_size=24)
+            nx.draw(graph, with_labels=True, ax=ax)
 
-        plt.suptitle("Network graph", weight="bold")
+        if plot_criteria == EnabledEdges:
+            plt.suptitle("Network graph", weight="bold")
+        elif plot_criteria == AllEdges:
+            plt.suptitle("Network graph (all edges)", weight="bold")
+
         print(fig)
 
 
