@@ -1,7 +1,49 @@
 """
-In this package there function are provided regarding the simulation a power system. 
+`power_system_simulation.py` contains the class `PowerSim`. 
+This class defines and validates a grid based on `power_flow_processing.PowerFlow`
 
-Power system should be given in PGM input format. 
+It is initialized with parameters:
+`def __init__(`
+`        self,`
+`        grid_data: dict,`
+`        lv_feeders: list = None,`
+`        active_power_profile: pd.DataFrame = None,`
+`        reactive_power_profile: pd.DataFrame = None,`
+`    ) -> None`
+
+The object saves:
+`self.power_sim_model = pfp.PowerFlow(grid_data=grid_data)`
+`self.grid_data`
+`self.lv_feeders`
+`self.active_power_profile`
+`self.reactive_power_profile`
+
+This data is used if no input is provided to the class functions.
+
+The class contains the functions: 
+1. `n1_calculations(`
+   `     self,`
+   `     grid_data: dict,`
+   `     active_power_profile: pd.DataFrame,`
+   `     reactive_power_profile: pd.DataFrame,`
+   `     disabled_edge_id: int,`
+   ` ) -> pd.DataFrame`
+2. `ev_penetration(`
+   `     self,`
+   `     num_houses: int,`
+   `     num_feeders: int,`
+   `     penetration_level: float,`
+   `     active_power_profile: pd.DataFrame,`
+   `     reactive_power_profile: pd.DataFrame,`
+   `     ev_active_power_profile: pd.DataFrame,`
+   ` ) -> tuple`
+3. `optimal_tap_position(`
+   `     self,`
+   `     active_power_profile: pd.DataFrame = None,`
+   `     reactive_power_profile: pd.DataFrame = None,`
+   `     opt_criteria=TotalEnergyLoss,`
+   ` ) -> int`
+4. `network_plotter(self, plot_criteria=graph_processing.EnabledEdges) -> None`
 """
 
 import math

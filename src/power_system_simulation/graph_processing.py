@@ -1,7 +1,30 @@
 """
-This is a skeleton for the graph processing assignment.
+`graph_processing.py` contains the class `GraphProcessor`. 
 
-We define a graph processor class with some function skeletons. Test
+This class defines and validates a grid and runs processing functions. It is initialized with parameters:
+`def __init__(`
+        `self,`
+        `vertex_ids: List[int],`
+        `edge_ids: List[int],`
+        `edge_vertex_id_pairs: List[Tuple[int, int]],`
+        `edge_enabled: List[bool],`
+        `source_vertex_id: int,`
+    `) -> None`
+
+The object saves:
+1. `self.vertex_ids`
+2. `self.edge_ids`
+3. `self.edge_vertex_id_pairs`
+4. `self.edge_enabled`
+5. `self.source_vertex_id`
+
+The class contains the functions: 
+1. `dfs(self, adjacency_list, visited, parent, parent_list, start_node) -> List[int]`
+2. `build_adjacency_list(self, edge_vertex_id_pairs, edge_enabled)`
+3. `find_downstream_vertices(self, edge_id: int) -> List[int]`
+4. `find_alternative_edges(self, disabled_edge_id: int) -> List[int]`
+5. `graph_plotter(self, plot_criteria=EnabledEdges) -> None`
+6. `sort_tuple_list(edge_vertex_id_pairs) -> List[Tuple[int, int]]`
 """
 
 from enum import IntEnum
